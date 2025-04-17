@@ -414,26 +414,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               _isEditingTitle = true;
                             });
                           },
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.task['title'] ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () {
-                                  setState(() {
-                                    _isEditingTitle = true;
-                                  });
-                                },
-                              ),
-                            ],
+                          child: Text(
+                            widget.task['title'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                 ),
@@ -515,50 +501,30 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                           autofocus: true,
                                         ),
                                       )
-                                    : Row(
-                                        children: [
-                                          Expanded(
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _editingSubtasks[index] = true;
-                                                });
-                                              },
-                                              child: Text(
-                                                subtask,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                            ),
+                                    : GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _editingSubtasks[index] = true;
+                                          });
+                                        },
+                                        child: Text(
+                                          subtask,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87,
                                           ),
-                                          IconButton(
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            icon: Icon(
-                                              Icons.edit,
-                                              size: 20,
-                                              color: Colors.grey[600],
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _editingSubtasks[index] = true;
-                                              });
-                                            },
-                                          ),
-                                          IconButton(
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                            icon: Icon(
-                                              Icons.delete_outline,
-                                              size: 20,
-                                              color: Colors.red[300],
-                                            ),
-                                            onPressed: () => _deleteSubtask(index),
-                                          ),
-                                        ],
+                                        ),
                                       ),
+                              ),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Colors.red[300],
+                                ),
+                                onPressed: () => _deleteSubtask(index),
                               ),
                             ],
                           ),

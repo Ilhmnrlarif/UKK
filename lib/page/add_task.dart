@@ -278,266 +278,270 @@ class _AddTaskPageState extends State<AddTaskPage> {
           topRight: Radius.circular(20),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tambah Tugas',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-                color: Colors.grey,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // Input field dan button dalam satu row
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: TextField(
-                    controller: _taskController,
-                    decoration: const InputDecoration(
-                      hintText: 'Masukan tugas baru disini',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF69D1F7),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: _isLoading 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Icon(Icons.play_arrow, color: Colors.white),
-                  onPressed: _isLoading ? null : _createTask,
-                ),
-              ),
-            ],
-          ),
-          if (_showSubtaskInput) ...[
-            const SizedBox(height: 10),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[400]!),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _subtaskController,
-                    decoration: const InputDecoration(
-                      hintText: 'Masukan tugas sampingan',
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 14,
-                    ),
-                    onSubmitted: (value) {
-                      if (value.isNotEmpty) {
-                        setState(() {
-                          _subtasks.add(value);
-                          _subtaskController.clear();
-                          _showSubtaskInput = false;
-                        });
-                      }
-                    },
-                    autofocus: true,
+                const Text(
+                  'Tambah Tugas',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  onPressed: () {
-                    setState(() {
-                      _showSubtaskInput = false;
-                      _subtaskController.clear();
-                    });
-                  },
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                  color: Colors.grey,
                 ),
               ],
             ),
-          ],
-          if (_subtasks.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ..._subtasks.asMap().entries.map((entry) {
-              final index = entry.key;
-              final subtask = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey[400]!),
+            const SizedBox(height: 20),
+            // Input field dan button dalam satu row
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextField(
+                      controller: _taskController,
+                      decoration: const InputDecoration(
+                        hintText: 'Masukan tugas baru disini',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: Colors.grey),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        subtask,
-                        style: const TextStyle(
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF69D1F7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: _isLoading 
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.play_arrow, color: Colors.white),
+                    onPressed: _isLoading ? null : _createTask,
+                  ),
+                ),
+              ],
+            ),
+            if (_showSubtaskInput) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey[400]!),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _subtaskController,
+                      decoration: const InputDecoration(
+                        hintText: 'Masukan tugas sampingan',
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
                           fontSize: 14,
-                          color: Colors.black87,
                         ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: Icon(
-                        Icons.close,
-                        size: 20,
-                        color: Colors.grey[400],
+                      style: const TextStyle(
+                        fontSize: 14,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _subtasks.removeAt(index);
-                        });
+                      onSubmitted: (value) {
+                        if (value.isNotEmpty) {
+                          setState(() {
+                            _subtasks.add(value);
+                            _subtaskController.clear();
+                            _showSubtaskInput = false;
+                          });
+                        }
                       },
+                      autofocus: true,
                     ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              _buildCategoryButton(),
-              const SizedBox(width: 10),
-              // Tanggal
-              GestureDetector(
-                onTap: _pickDate,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      if (_dueDate != null) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(_dueDate!),
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () {
+                      setState(() {
+                        _showSubtaskInput = false;
+                        _subtaskController.clear();
+                      });
+                    },
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: _showPriorityDialog,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.flag,
-                        size: 16,
-                        color: _selectedPriority != null 
-                            ? priorities[_selectedPriority]
-                            : Colors.grey[600],
-                      ),
-                      if (_selectedPriority != null) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          _selectedPriority!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Subtask button
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showSubtaskInput = true;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.checklist,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 20),
-        ],
+            if (_subtasks.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ..._subtasks.asMap().entries.map((entry) {
+                final index = entry.key;
+                final subtask = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey[400]!),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          subtask,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey[400],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _subtasks.removeAt(index);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildCategoryButton(),
+                // Tanggal
+                GestureDetector(
+                  onTap: _pickDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        if (_dueDate != null) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDate(_dueDate!),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _showPriorityDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.flag,
+                          size: 16,
+                          color: _selectedPriority != null 
+                              ? priorities[_selectedPriority]
+                              : Colors.grey[600],
+                        ),
+                        if (_selectedPriority != null) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            _selectedPriority!,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                // Subtask button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showSubtaskInput = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.checklist,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
