@@ -205,186 +205,149 @@ class _AddTaskPageState extends State<AddTaskPage> {
   Widget _buildCategoryButton() {
     return GestureDetector(
       onTap: () {
-        showDialog(
+        final RenderBox button = context.findRenderObject() as RenderBox;
+        final Offset offset = button.localToGlobal(Offset.zero);
+        
+        showMenu(
           context: context,
-          builder: (BuildContext context) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          position: RelativeRect.fromLTRB(
+            offset.dx,
+            offset.dy + button.size.height,
+            offset.dx + button.size.width,
+            offset.dy + button.size.height + 200,
+          ),
+          items: [
+            PopupMenuItem(
+              height: 40,
+              child: Text(
+                'Tidak Ada Kategori',
+                style: TextStyle(
+                  color: Colors.blue[300],
+                  fontSize: 14,
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Pilih Kategori',
+              onTap: () {
+                setState(() {
+                  _selectedCategory = null;
+                });
+              },
+            ),
+            ..._categories.map((category) => PopupMenuItem(
+              height: 40,
+              child: Text(
+                category,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  _selectedCategory = category;
+                });
+              },
+            )).toList(),
+            PopupMenuItem(
+              height: 40,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.add,
+                    size: 18,
+                    color: Colors.blue[300],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Buat baru',
+                    style: TextStyle(
+                      color: Colors.blue[300],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              onTap: () {
+                // Delay untuk menghindari konflik dengan penutupan menu
+                Future.delayed(const Duration(milliseconds: 10), () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      final TextEditingController categoryController = TextEditingController();
+                      return AlertDialog(
+                        title: const Text(
+                          'Tambah Kategori Baru',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(Icons.close, size: 20),
+                        content: TextField(
+                          controller: categoryController,
+                          decoration: const InputDecoration(
+                            hintText: 'Nama kategori',
+                            hintStyle: TextStyle(fontSize: 14),
+                          ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.4,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ListTile(
-                              title: Text(
-                                'Tidak Ada Kategori',
-                                style: TextStyle(
-                                  color: Colors.blue[300],
-                                  fontSize: 14,
-                                ),
+                        actions: [
+                          TextButton(
+                            child: Text(
+                              'BATAL',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
                               ),
-                              contentPadding: EdgeInsets.zero,
-                              visualDensity: const VisualDensity(vertical: -4),
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = null;
-                                });
-                                Navigator.pop(context);
-                              },
                             ),
-                            ..._categories.map((category) {
-                              return ListTile(
-                                title: Text(
-                                  category,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                contentPadding: EdgeInsets.zero,
-                                visualDensity: const VisualDensity(vertical: -4),
-                                onTap: () {
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          TextButton(
+                            child: Text(
+                              'SIMPAN',
+                              style: TextStyle(
+                                color: Colors.blue[300],
+                                fontSize: 14,
+                              ),
+                            ),
+                            onPressed: () async {
+                              if (categoryController.text.isNotEmpty) {
+                                try {
+                                  final userId = Supabase.instance.client.auth.currentUser!.id;
+                                  final newCategories = [..._categories, categoryController.text];
+                                  
+                                  await Supabase.instance.client
+                                      .from('profiles')
+                                      .update({
+                                        'category': newCategories,
+                                      })
+                                      .eq('id', userId);
+
                                   setState(() {
-                                    _selectedCategory = category;
+                                    _categories = newCategories;
+                                    _selectedCategory = categoryController.text;
                                   });
+
+                                  if (!mounted) return;
                                   Navigator.pop(context);
-                                },
-                              );
-                            }).toList(),
-                            ListTile(
-                              title: Row(
-                                children: [
-                                  Icon(
-                                    Icons.add,
-                                    size: 18,
-                                    color: Colors.blue[300],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Buat baru',
-                                    style: TextStyle(
-                                      color: Colors.blue[300],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              contentPadding: EdgeInsets.zero,
-                              visualDensity: const VisualDensity(vertical: -4),
-                              onTap: () {
-                                // Implementasi untuk menambah kategori baru
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    final TextEditingController categoryController = TextEditingController();
-                                    return AlertDialog(
-                                      title: const Text(
-                                        'Tambah Kategori Baru',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      content: TextField(
-                                        controller: categoryController,
-                                        decoration: const InputDecoration(
-                                          hintText: 'Nama kategori',
-                                          hintStyle: TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          child: Text(
-                                            'BATAL',
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          onPressed: () => Navigator.pop(context),
-                                        ),
-                                        TextButton(
-                                          child: Text(
-                                            'SIMPAN',
-                                            style: TextStyle(
-                                              color: Colors.blue[300],
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          onPressed: () async {
-                                            if (categoryController.text.isNotEmpty) {
-                                              try {
-                                                final userId = Supabase.instance.client.auth.currentUser!.id;
-                                                final newCategories = [..._categories, categoryController.text];
-                                                
-                                                await Supabase.instance.client
-                                                    .from('profiles')
-                                                    .update({
-                                                      'category': newCategories,
-                                                    })
-                                                    .eq('id', userId);
-
-                                                setState(() {
-                                                  _categories = newCategories;
-                                                  _selectedCategory = categoryController.text;
-                                                });
-
-                                                if (!mounted) return;
-                                                Navigator.pop(context); // Tutup dialog tambah kategori
-                                                Navigator.pop(context); // Tutup dialog pilih kategori
-                                              } catch (e) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text('Error: $e')),
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                });
+              },
+            ),
+          ],
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
         );
       },
       child: Container(
