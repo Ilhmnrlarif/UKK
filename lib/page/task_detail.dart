@@ -317,6 +317,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
+                        backgroundColor: Colors.white,
                         title: const Text('Pilih Kategori'),
                         content: SingleChildScrollView(
                           child: Column(

@@ -43,7 +43,9 @@ class _TaskPageState extends State<TaskPage> {
 
       if (response != null && response['category'] != null) {
         setState(() {
-          // Tambahkan kategori dari database ke list yang sudah ada 'Semua'
+          // Reset categories terlebih dahulu
+          _categories = ['Semua'];
+          // Tambahkan kategori baru dari database
           _categories.addAll(List<String>.from(response['category']));
         });
       }
