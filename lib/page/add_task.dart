@@ -14,12 +14,23 @@ class AddTaskPage extends StatefulWidget {
 class _AddTaskPageState extends State<AddTaskPage> {
   final _taskController = TextEditingController();
   final _notesController = TextEditingController();
+  final _subtaskController = TextEditingController();
   String? _selectedCategory;
+  String? _selectedPriority;
   DateTime? _dueDate;
   DateTime? _reminderTime;
   File? _attachment;
   bool _isLoading = false;
   List<String> _categories = [];
+  List<String> _subtasks = [];
+  bool _showSubtaskInput = false;
+
+  // Definisi prioritas dan warnanya
+  final Map<String, Color> priorities = {
+    'High': Colors.red,
+    'Medium': Colors.orange,
+    'Easy': Colors.green,
+  };
 
   @override
   void initState() {
@@ -95,12 +106,14 @@ class _AddTaskPageState extends State<AddTaskPage> {
         'user_id': Supabase.instance.client.auth.currentUser!.id,
         'title': _taskController.text,
         'category': _selectedCategory,
+        'priority': _selectedPriority,
         'due_date': _dueDate?.toIso8601String(),
         'reminder_time': _reminderTime?.toIso8601String(),
         'notes': _notesController.text,
         'attachment_url': attachmentUrl,
         'is_completed': false,
         'created_at': DateTime.now().toIso8601String(),
+        'subtasks': _subtasks.isNotEmpty ? _subtasks : null,
       });
 
       // ignore: use_build_context_synchronously
@@ -118,6 +131,33 @@ class _AddTaskPageState extends State<AddTaskPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _showPriorityDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pilih Prioritas'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: priorities.entries.map((entry) {
+            return ListTile(
+              leading: Icon(
+                Icons.flag,
+                color: entry.value,
+              ),
+              title: Text(entry.key),
+              onTap: () {
+                setState(() {
+                  _selectedPriority = entry.key;
+                });
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickImage() async {
@@ -301,6 +341,107 @@ class _AddTaskPageState extends State<AddTaskPage> {
               ),
             ],
           ),
+          if (_showSubtaskInput) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[400]!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _subtaskController,
+                    decoration: const InputDecoration(
+                      hintText: 'Masukan tugas sampingan',
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                    onSubmitted: (value) {
+                      if (value.isNotEmpty) {
+                        setState(() {
+                          _subtasks.add(value);
+                          _subtaskController.clear();
+                          _showSubtaskInput = false;
+                        });
+                      }
+                    },
+                    autofocus: true,
+                  ),
+                ),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () {
+                    setState(() {
+                      _showSubtaskInput = false;
+                      _subtaskController.clear();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+          if (_subtasks.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ..._subtasks.asMap().entries.map((entry) {
+              final index = entry.key;
+              final subtask = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[400]!),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        subtask,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: Colors.grey[400],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _subtasks.removeAt(index);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
           const SizedBox(height: 20),
           Row(
             children: [
@@ -337,39 +478,60 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 ),
               ),
               const SizedBox(width: 10),
-              // Share
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.share,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ],
+              GestureDetector(
+                onTap: _showPriorityDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.flag,
+                        size: 16,
+                        color: _selectedPriority != null 
+                            ? priorities[_selectedPriority]
+                            : Colors.grey[600],
+                      ),
+                      if (_selectedPriority != null) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          _selectedPriority!,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              // Checklist
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_box_outlined,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ],
+              // Subtask button
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showSubtaskInput = true;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.checklist,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -384,6 +546,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
   void dispose() {
     _taskController.dispose();
     _notesController.dispose();
+    _subtaskController.dispose();
     super.dispose();
   }
 }

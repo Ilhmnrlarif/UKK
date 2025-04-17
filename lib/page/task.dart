@@ -21,6 +21,9 @@ class _TaskPageState extends State<TaskPage> {
   Set<String> _selectedTasks = {};
   bool _isTasksOpen = true;
   bool _isCompletedTasksOpen = true;
+  List<String> _subtasks = [];
+  List<TextEditingController> _subtaskControllers = [];
+  List<bool> _editingSubtasks = [];
 
   @override
   void initState() {
@@ -168,6 +171,15 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
+  void _onTaskUpdated(Map<String, dynamic> updatedTask) {
+    setState(() {
+      final index = _tasks.indexWhere((task) => task['id'] == updatedTask['id']);
+      if (index != -1) {
+        _tasks[index] = updatedTask;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,7 +196,10 @@ class _TaskPageState extends State<TaskPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TaskDetailPage(task: selectedTask),
+                builder: (context) => TaskDetailPage(
+                  task: selectedTask,
+                  onTaskUpdated: _onTaskUpdated,
+                ),
               ),
             ).then((result) {
               if (result == true) {
@@ -436,6 +451,20 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildTaskItem(Map<String, dynamic> task) {
+    // Fungsi untuk mendapatkan warna prioritas
+    Color getPriorityColor(String? priority) {
+      switch (priority) {
+        case 'High':
+          return Colors.red;
+        case 'Medium':
+          return Colors.orange;
+        case 'Easy':
+          return Colors.green;
+        default:
+          return Colors.grey;
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         if (_isSelectionMode) {
@@ -450,7 +479,10 @@ class _TaskPageState extends State<TaskPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => TaskDetailPage(task: task),
+              builder: (context) => TaskDetailPage(
+                task: task,
+                onTaskUpdated: _onTaskUpdated,
+              ),
             ),
           ).then((result) {
             if (result == true) {
@@ -540,6 +572,26 @@ class _TaskPageState extends State<TaskPage> {
                 ),
               ),
             ),
+            // Indikator subtask
+            if (task['subtasks'] != null && (task['subtasks'] as List).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.assignment,
+                  size: 20,
+                  color: Colors.blue[300],
+                ),
+              ),
+            // Indikator prioritas
+            if (task['priority'] != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.flag,
+                  size: 20,
+                  color: getPriorityColor(task['priority']),
+                ),
+              ),
             if (task['due_date'] != null)
               Text(
                 task['due_date'].toString().split('T')[0],

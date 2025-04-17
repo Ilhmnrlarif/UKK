@@ -5,8 +5,13 @@ import 'dart:io';
 
 class TaskDetailPage extends StatefulWidget {
   final Map<String, dynamic> task;
+  final Function(Map<String, dynamic>) onTaskUpdated;
 
-  const TaskDetailPage({Key? key, required this.task}) : super(key: key);
+  const TaskDetailPage({
+    Key? key, 
+    required this.task,
+    required this.onTaskUpdated,
+  }) : super(key: key);
 
   @override
   State<TaskDetailPage> createState() => _TaskDetailPageState();
@@ -61,6 +66,80 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       _subtasks = subtasksJson.map((task) => task.toString()).toList();
     } else {
       _subtasks = [];
+    }
+  }
+
+  Future<void> _deleteSubtask(int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Tugas Sampingan'),
+        content: const Text('Apakah Anda yakin ingin menghapus tugas sampingan ini?'),
+        actions: [
+          TextButton(
+            child: Text(
+              'BATAL',
+              style: TextStyle(
+                color: Colors.grey[600],
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          TextButton(
+            child: const Text(
+              'HAPUS',
+              style: TextStyle(
+                color: Colors.red,
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      setState(() => _isLoading = true);
+      
+      List<String> updatedSubtasks = List.from(_subtasks);
+      updatedSubtasks.removeAt(index);
+      
+      final updatedTask = await Supabase.instance.client
+          .from('tasks')
+          .update({
+            'subtasks': updatedSubtasks,
+          })
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      setState(() {
+        _subtasks = updatedSubtasks;
+        _subtaskControllers.remove(index);
+        _editingSubtasks.remove(index);
+      });
+
+      widget.onTaskUpdated(updatedTask);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas sampingan berhasil dihapus'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error menghapus tugas sampingan: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -337,22 +416,49 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                           autofocus: true,
                                         ),
                                       )
-                                    : SizedBox(
-                                        height: 20,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _editingSubtasks[index] = true;
-                                            });
-                                          },
-                                          child: Text(
-                                            subtask,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black87,
+                                    : Row(
+                                        children: [
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _editingSubtasks[index] = true;
+                                                });
+                                              },
+                                              child: Text(
+                                                subtask,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            icon: Icon(
+                                              Icons.edit,
+                                              size: 20,
+                                              color: Colors.grey[600],
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _editingSubtasks[index] = true;
+                                              });
+                                            },
+                                          ),
+                                          IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            icon: Icon(
+                                              Icons.delete_outline,
+                                              size: 20,
+                                              color: Colors.red[300],
+                                            ),
+                                            onPressed: () => _deleteSubtask(index),
+                                          ),
+                                        ],
                                       ),
                               ),
                             ],
@@ -733,7 +839,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   Future<void> _updateTask() async {
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client
+      final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
             'due_date': _dueDate?.toIso8601String(),
@@ -758,7 +864,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             'reminder_type': _reminderType,
             'notes': _notesController.text,
           })
-          .eq('id', widget.task['id']);
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.onTaskUpdated(updatedTask);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -849,15 +959,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
   Future<void> _updateSubtasks() async {
     try {
-      // Konversi List<String> menjadi List<dynamic> untuk format JSON yang benar
       final List<dynamic> subtasksJson = _subtasks.map((task) => task).toList();
       
-      await Supabase.instance.client
+      final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
-            'subtasks': subtasksJson, // Simpan sebagai JSON array
+            'subtasks': subtasksJson,
           })
-          .eq('id', widget.task['id']);
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+      
+      widget.onTaskUpdated(updatedTask);
       
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -877,12 +990,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     try {
       setState(() => _isLoading = true);
       
-      await Supabase.instance.client
+      final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
             'title': _taskTitleController.text,
           })
-          .eq('id', widget.task['id']);
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.onTaskUpdated(updatedTask);
 
       setState(() {
         _isEditingTitle = false;
@@ -914,12 +1031,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       List<String> updatedSubtasks = List.from(_subtasks);
       updatedSubtasks[index] = newText;
       
-      await Supabase.instance.client
+      final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
             'subtasks': updatedSubtasks,
           })
-          .eq('id', widget.task['id']);
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.onTaskUpdated(updatedTask);
 
       setState(() {
         _subtasks = updatedSubtasks;
