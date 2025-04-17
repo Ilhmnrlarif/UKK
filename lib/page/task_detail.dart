@@ -27,6 +27,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   List<String> _attachmentUrls = [];
   bool _isLoading = false;
   String? _category;
+  List<String> _availableCategories = [];
   final TextEditingController _subtaskController = TextEditingController();
   List<String> _subtasks = [];
   bool _showSubtaskInput = false;
@@ -39,6 +40,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   void initState() {
     super.initState();
     _loadTaskDetails();
+    _loadCategories();
     _taskTitleController.text = widget.task['title'] ?? '';
   }
 
@@ -66,6 +68,67 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       _subtasks = subtasksJson.map((task) => task.toString()).toList();
     } else {
       _subtasks = [];
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId != null) {
+        final data = await Supabase.instance.client
+            .from('profiles')
+            .select('category')
+            .eq('id', userId)
+            .single();
+        
+        if (data['category'] != null) {
+          setState(() {
+            _availableCategories = List<String>.from(data['category']);
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading categories: $e');
+    }
+  }
+
+  Future<void> _updateCategory(String newCategory) async {
+    try {
+      setState(() {
+        widget.task['category'] = newCategory;
+        _category = newCategory;
+      });
+
+      final updatedTask = await Supabase.instance.client
+          .from('tasks')
+          .update({
+            'category': newCategory,
+          })
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.onTaskUpdated(updatedTask);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kategori berhasil diperbarui'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        widget.task['category'] = _category;
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error memperbarui kategori: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -249,28 +312,64 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Kategori dropdown
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.task['category'] ?? 'Tidak Ada Kategori',
-                        style: TextStyle(
-                          color: Colors.grey[800],
-                          fontSize: 12,
+                GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Pilih Kategori'),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: _availableCategories.map((category) {
+                              return ListTile(
+                                title: Text(category),
+                                selected: category == widget.task['category'],
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _updateCategory(category);
+                                },
+                              );
+                            }).toList(),
+                          ),
                         ),
+                        actions: [
+                          TextButton(
+                            child: Text(
+                              'BATAL',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
                       ),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        size: 18,
-                        color: Colors.grey,
-                      ),
-                    ],
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.task['category'] ?? 'Tidak Ada Kategori',
+                          style: TextStyle(
+                            color: Colors.grey[800],
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_drop_down,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 

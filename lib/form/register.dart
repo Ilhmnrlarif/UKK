@@ -14,6 +14,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   Future<void> _signUp() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -119,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 15),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
                     hintText: 'Password',
@@ -130,12 +132,23 @@ class _RegisterPageState extends State<RegisterPage> {
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF69D1F7)),
                     ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[600],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _confirmPasswordController,
-                  obscureText: true,
+                  obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
                     hintText: 'Confirm Password',
@@ -145,6 +158,17 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF69D1F7)),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[600],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
                     ),
                   ),
                 ),

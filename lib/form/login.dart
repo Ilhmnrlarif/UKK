@@ -15,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool rememberMe = false;
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _signIn() async {
     setState(() {
@@ -83,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscurePassword,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
                 hintText: 'Password',
@@ -93,6 +94,17 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Color(0xFF69D1F7)),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey[600],
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
                 ),
               ),
             ),
