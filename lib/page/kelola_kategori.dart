@@ -369,156 +369,169 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                   ),
                 ),
                 Expanded(
-                  child: ReorderableListView.builder(
-                    buildDefaultDragHandles: false,
+                  child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      final categoryColor = Color(category['color'] ?? CategoryColor.colors[4].value);
-                      
-                      return ReorderableDragStartListener(
-                        key: ValueKey(category['name']),
-                        index: index,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 16, // Smaller circle
-                                height: 16, // Smaller circle
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: categoryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  category['name'],
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                    children: [
+                      ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        itemCount: _categories.length,
+                        itemBuilder: (context, index) {
+                          final category = _categories[index];
+                          return ReorderableDragStartListener(
+                            key: ValueKey(category['name']),
+                            index: index,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Color(category['color'] ?? CategoryColor.colors[4].value),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              Text(
-                                '${category['count']}',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              PopupMenuButton<String>(
-                                padding: EdgeInsets.zero,
-                                iconSize: 20,
-                                icon: Icon(
-                                  Icons.more_vert,
-                                  color: Colors.grey[600],
-                                ),
-                                color: Colors.white,
-                                position: PopupMenuPosition.under,
-                                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                  const PopupMenuItem<String>(
-                                    value: 'edit',
-                                    child: Text('Edit'),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text(
+                                      category['name'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                   ),
-                                  const PopupMenuItem<String>(
-                                    value: 'delete',
-                                    child: Text('Hapus'),
+                                  Text(
+                                    '${category['count']}',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  PopupMenuButton<String>(
+                                    padding: EdgeInsets.zero,
+                                    iconSize: 20,
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      color: Colors.grey[600],
+                                    ),
+                                    color: Colors.white,
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                      const PopupMenuItem<String>(
+                                        value: 'edit',
+                                        child: Text('Edit'),
+                                      ),
+                                      const PopupMenuItem<String>(
+                                        value: 'delete',
+                                        child: Text('Hapus'),
+                                      ),
+                                    ],
+                                    onSelected: (String value) {
+                                      if (value == 'edit') {
+                                        _editCategory(category['name'], Color(category['color'] ?? CategoryColor.colors[4].value));
+                                      } else if (value == 'delete') {
+                                        _deleteCategory(category['name']);
+                                      }
+                                    },
                                   ),
                                 ],
-                                onSelected: (String value) {
-                                  if (value == 'edit') {
-                                    _editCategory(category['name'], categoryColor);
-                                  } else if (value == 'delete') {
-                                    _deleteCategory(category['name']);
-                                  }
-                                },
+                              ),
+                            ),
+                          );
+                        },
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) {
+                              newIndex -= 1;
+                            }
+                            final item = _categories.removeAt(oldIndex);
+                            _categories.insert(newIndex, item);
+                            _updateCategories(_categories);
+                          });
+                        },
+                      ),
+                      InkWell(
+                        onTap: () async {
+                          _categoryController.clear();
+                          await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: const Text('Kategori Baru'),
+                              content: TextField(
+                                controller: _categoryController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Nama Kategori',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Batal'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    if (_categoryController.text.isNotEmpty) {
+                                      final newCategory = {
+                                        'name': _categoryController.text,
+                                        'count': 0,
+                                      };
+                                      final newCategories = [..._categories, newCategory];
+                                      await _updateCategories(newCategories);
+                                      setState(() {
+                                        _categories = newCategories;
+                                      });
+                                      if (mounted) Navigator.pop(context);
+                                    }
+                                  },
+                                  child: const Text('Tambah'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.add, color: Colors.blue[400], size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Buat baru',
+                                style: TextStyle(
+                                  color: Colors.blue[400],
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                        final item = _categories.removeAt(oldIndex);
-                        _categories.insert(newIndex, item);
-                        _updateCategories(_categories);
-                      });
-                    },
-                  ),
-                ),
-                InkWell(
-                  onTap: () async {
-                    _categoryController.clear();
-                    await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Kategori Baru'),
-                        content: TextField(
-                          controller: _categoryController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nama Kategori',
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Batal'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              if (_categoryController.text.isNotEmpty) {
-                                final newCategory = {
-                                  'name': _categoryController.text,
-                                  'count': 0,
-                                };
-                                final newCategories = [..._categories, newCategory];
-                                await _updateCategories(newCategories);
-                                setState(() {
-                                  _categories = newCategories;
-                                });
-                                if (mounted) Navigator.pop(context);
-                              }
-                            },
-                            child: const Text('Tambah'),
-                          ),
-                        ],
                       ),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Icon(Icons.add, color: Colors.blue[400], size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Buat baru',
-                          style: TextStyle(
-                            color: Colors.blue[400],
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Center(
+                          child: Text(
+                            'Klik lama dan seret untuk menyusun ulang',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Klik lama dan seret untuk menyusun ulang',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
