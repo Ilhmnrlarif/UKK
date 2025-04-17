@@ -142,91 +142,103 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
   Future<void> _editCategory(String oldName, Color currentColor) async {
     _categoryController.text = oldName;
     _selectedColor = currentColor;
+    bool _showColorPicker = false;
     
     await showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Buat kategori baru',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TextField(
-                  controller: _categoryController,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                    suffixText: '${_categoryController.text.length}/50',
-                    suffixStyle: TextStyle(color: Colors.grey[600]),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Buat kategori baru',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  maxLength: 50,
-                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                 ),
-              ),
-              const SizedBox(height: 24),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Warna kategori',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                const SizedBox(height: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: _categoryController,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.all(16),
+                      suffixText: '${_categoryController.text.length}/50',
+                      suffixStyle: TextStyle(color: Colors.grey[600]),
                     ),
+                    maxLength: 50,
+                    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Warna akan ditampilkan di antarmuka kalender',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                ),
+                const SizedBox(height: 24),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _showColorPicker = !_showColorPicker;
+                    });
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Warna kategori',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Warna akan ditampilkan di antarmuka kalender',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                if (_showColorPicker) ...[
                   const SizedBox(height: 16),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ...CategoryColor.colors.map((color) => Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedColor = color);
-                            Navigator.pop(context);
-                            _editCategory(oldName, color);
-                          },
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: color == _selectedColor
-                                  ? Border.all(color: Colors.blue, width: 2)
-                                  : null,
-                            ),
+                      ...CategoryColor.colors.map((color) => GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedColor = color;
+                            _showColorPicker = false;
+                          });
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: color == _selectedColor
+                                ? Border.all(color: Colors.blue, width: 2)
+                                : null,
                           ),
                         ),
                       )),
                       // Custom color picker (disabled for now)
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.grey[300]!),
@@ -236,48 +248,54 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                     ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'BATAL',
-                      style: TextStyle(color: Colors.grey[600]),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'BATAL',
+                        style: TextStyle(
+                          color: Colors.blue[200],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  TextButton(
-                    onPressed: () async {
-                      if (_categoryController.text.isNotEmpty) {
-                        final newCategories = _categories.map((cat) {
-                          if (cat['name'] == oldName) {
-                            return {
-                              'name': _categoryController.text,
-                              'count': cat['count'],
-                              'color': _selectedColor.value,
-                            };
-                          }
-                          return cat;
-                        }).toList();
-                        
-                        await _updateCategories(newCategories);
-                        setState(() {
-                          _categories = newCategories;
-                        });
-                        if (mounted) Navigator.pop(context);
-                      }
-                    },
-                    child: const Text(
-                      'SIMPAN',
-                      style: TextStyle(color: Colors.blue),
+                    const SizedBox(width: 16),
+                    TextButton(
+                      onPressed: () async {
+                        if (_categoryController.text.isNotEmpty) {
+                          final newCategories = _categories.map((cat) {
+                            if (cat['name'] == oldName) {
+                              return {
+                                'name': _categoryController.text,
+                                'count': cat['count'],
+                                'color': _selectedColor.value,
+                              };
+                            }
+                            return cat;
+                          }).toList();
+                          
+                          await _updateCategories(newCategories);
+                          setState(() {
+                            _categories = newCategories;
+                          });
+                          if (mounted) Navigator.pop(context);
+                        }
+                      },
+                      child: Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                          color: Colors.blue[400],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

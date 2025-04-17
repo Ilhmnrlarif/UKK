@@ -11,11 +11,12 @@ class KalenderPage extends StatefulWidget {
 }
 
 class _KalenderPageState extends State<KalenderPage> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<dynamic>> _events = {};
   List<dynamic> _selectedEvents = [];
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -110,7 +111,9 @@ class _KalenderPageState extends State<KalenderPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leadingWidth: 40,
         leading: IconButton(
+          padding: const EdgeInsets.only(left: 8),
           icon: const Icon(Icons.chevron_left, color: Colors.black, size: 30),
           onPressed: () {
             setState(() {
@@ -120,6 +123,7 @@ class _KalenderPageState extends State<KalenderPage> {
         ),
         actions: [
           IconButton(
+            padding: const EdgeInsets.only(right: 8),
             icon: const Icon(Icons.chevron_right, color: Colors.black, size: 30),
             onPressed: () {
               setState(() {
@@ -128,14 +132,17 @@ class _KalenderPageState extends State<KalenderPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+            padding: const EdgeInsets.only(right: 8),
+            icon: Icon(
+              _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: Colors.black
+            ),
             onPressed: () {
-              // TODO: Implementasi dropdown format kalender
+              setState(() {
+                _isExpanded = !_isExpanded;
+                _calendarFormat = _isExpanded ? CalendarFormat.month : CalendarFormat.week;
+              });
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
           ),
         ],
         title: Text(
@@ -156,6 +163,10 @@ class _KalenderPageState extends State<KalenderPage> {
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             calendarFormat: _calendarFormat,
+            availableCalendarFormats: const {
+              CalendarFormat.month: 'Bulan',
+              CalendarFormat.week: 'Minggu',
+            },
             eventLoader: _getEventsForDay,
             selectedDayPredicate: (day) {
               return isSameDay(_selectedDay, day);
@@ -170,6 +181,7 @@ class _KalenderPageState extends State<KalenderPage> {
             onFormatChanged: (format) {
               setState(() {
                 _calendarFormat = format;
+                _isExpanded = format == CalendarFormat.month;
               });
             },
             onPageChanged: (focusedDay) {
