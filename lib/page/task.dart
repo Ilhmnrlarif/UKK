@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:to_do_list/page/task_detail.dart';
 import 'package:to_do_list/page/history_task.dart';
 import 'package:to_do_list/page/side_bar.dart';
+import 'package:to_do_list/page/kelola_kategori.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({Key? key}) : super(key: key);
@@ -221,6 +222,47 @@ class _TaskPageState extends State<TaskPage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.grey[600],
+            ),
+            color: Colors.white,
+            onSelected: (value) {
+              switch (value) {
+                case 'kelola_kategori':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KelolaKategoriPage(),
+                    ),
+                  ).then((_) => _loadCategories());
+                  break;
+                case 'telusuri':
+                  // TODO: Implementasi telusuri
+                  break;
+                case 'cetak':
+                  // TODO: Implementasi cetak tugas
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'kelola_kategori',
+                child: Text('Kelola Kategori'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'telusuri',
+                child: Text('Telusuri'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'cetak',
+                child: Text('Cetak Tugas'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -230,17 +272,14 @@ class _TaskPageState extends State<TaskPage> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  ..._categories.asMap().entries.map((entry) {
-                    return Row(
-                      children: [
-                        _buildTab(entry.value, entry.key),
-                        const SizedBox(width: 10),
-                      ],
-                    );
-                  }).toList(),
-                  _buildMoreButton(),
-                ],
+                children: _categories.asMap().entries.map((entry) {
+                  return Row(
+                    children: [
+                      _buildTab(entry.value, entry.key),
+                      const SizedBox(width: 10),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -432,20 +471,6 @@ class _TaskPageState extends State<TaskPage> {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMoreButton() {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Icon(
-        Icons.more_horiz,
-        color: Colors.grey[600],
       ),
     );
   }

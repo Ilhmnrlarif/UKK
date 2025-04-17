@@ -20,41 +20,87 @@ class _KalenderPageState extends State<KalenderPage> {
   @override
   void initState() {
     super.initState();
+    _selectedDay = _focusedDay;
     _loadTasks();
   }
 
   Future<void> _loadTasks() async {
     try {
-      final response = await Supabase.instance.client
+      debugPrint('Loading tasks...');
+      
+      // Ambil data kategori warna terlebih dahulu
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('category_colors')
+          .eq('id', Supabase.instance.client.auth.currentUser!.id)
+          .single();
+      
+      debugPrint('Profile response: $profileResponse');
+      Map<String, int> categoryColors = {};
+      
+      if (profileResponse != null && profileResponse['category_colors'] != null) {
+        categoryColors = Map<String, int>.from(
+          Map<String, dynamic>.from(profileResponse['category_colors'])
+        );
+        debugPrint('Category colors loaded: $categoryColors');
+      }
+
+      // Ambil semua tugas
+      final tasksResponse = await Supabase.instance.client
           .from('tasks')
           .select()
           .eq('user_id', Supabase.instance.client.auth.currentUser!.id);
-
+      
+      debugPrint('Tasks response: $tasksResponse');
       Map<DateTime, List<dynamic>> events = {};
       
-      for (final task in response) {
+      for (final task in tasksResponse) {
+        debugPrint('Processing task: ${task['title']} with category: ${task['category']}');
         if (task['due_date'] != null) {
           final date = DateTime.parse(task['due_date']).toLocal();
           final key = DateTime(date.year, date.month, date.day);
+          debugPrint('Task date: $date, key: $key');
           
+          // Ambil warna dari categoryColors
+          Color taskColor = Colors.blue.shade300;
+          if (task['category'] != null && categoryColors.containsKey(task['category'])) {
+            taskColor = Color(categoryColors[task['category']]!);
+            debugPrint('Found color for category ${task['category']}: $taskColor');
+          }
+          
+          final taskWithColor = Map<String, dynamic>.from(task)
+            ..['displayColor'] = taskColor;
+          
+          debugPrint('Adding task to events with color: $taskColor');
           if (events[key] != null) {
-            events[key]!.add(task);
+            events[key]!.add(taskWithColor);
           } else {
-            events[key] = [task];
+            events[key] = [taskWithColor];
           }
         }
       }
 
-      setState(() {
-        _events = events;
-      });
-    } catch (e) {
-      print('Error loading tasks: $e');
+      debugPrint('Final events map: $events');
+      if (mounted) {
+        setState(() {
+          _events = events;
+          if (_selectedDay != null) {
+            _selectedEvents = _getEventsForDay(_selectedDay!);
+            debugPrint('Selected events: $_selectedEvents');
+          }
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error loading tasks: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
   List<dynamic> _getEventsForDay(DateTime day) {
-    return _events[DateTime(day.year, day.month, day.day)] ?? [];
+    final normalizedDay = DateTime(day.year, day.month, day.day);
+    final events = _events[normalizedDay] ?? [];
+    debugPrint('Getting events for $normalizedDay: ${events.length} events found');
+    return events;
   }
 
   @override
@@ -64,23 +110,43 @@ class _KalenderPageState extends State<KalenderPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              DateFormat('MMMM yyyy', 'id_ID').format(_focusedDay).toUpperCase(),
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
-              onPressed: () {},
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left, color: Colors.black, size: 30),
+          onPressed: () {
+            setState(() {
+              _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
+            });
+          },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chevron_right, color: Colors.black, size: 30),
+            onPressed: () {
+              setState(() {
+                _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+            onPressed: () {
+              // TODO: Implementasi dropdown format kalender
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
+        title: Text(
+          DateFormat('MMMM yyyy', 'id_ID').format(_focusedDay).toUpperCase(),
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -107,34 +173,116 @@ class _KalenderPageState extends State<KalenderPage> {
               });
             },
             onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
+              setState(() {
+                _focusedDay = focusedDay;
+              });
             },
             calendarStyle: CalendarStyle(
-              markersAlignment: Alignment.bottomCenter,
-              markerDecoration: const BoxDecoration(
-                color: Color(0xFF69D1F7),
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: const BoxDecoration(
-                color: Color(0xFF69D1F7),
-                shape: BoxShape.circle,
-              ),
+              outsideDaysVisible: false,
+              weekendTextStyle: const TextStyle(color: Colors.black),
+              holidayTextStyle: const TextStyle(color: Colors.black),
               todayDecoration: BoxDecoration(
-                color: const Color(0xFF69D1F7).withOpacity(0.5),
+                color: Colors.blue.shade100,
                 shape: BoxShape.circle,
               ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.blue.shade400,
+                shape: BoxShape.circle,
+              ),
+              markersAlignment: Alignment.bottomCenter,
+              markerSize: 5,
+              markerDecoration: const BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              markersMaxCount: 3,
+            ),
+            daysOfWeekStyle: const DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: Colors.black),
+              weekendStyle: TextStyle(color: Colors.black),
             ),
             headerVisible: false,
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                final normalizedDate = DateTime(date.year, date.month, date.day);
+                debugPrint('Building markers for $normalizedDate with ${events.length} events');
+                if (events.isEmpty) return const SizedBox();
+
+                return Positioned(
+                  bottom: 5,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: events.map((event) {
+                      final Map<String, dynamic> eventMap = event as Map<String, dynamic>;
+                      final Color displayColor = eventMap['displayColor'] as Color? ?? Colors.blue.shade300;
+                      debugPrint('Marker for ${eventMap['title']}: $displayColor');
+                      return Container(
+                        width: 5,
+                        height: 5,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: displayColor,
+                        ),
+                      );
+                    }).take(3).toList(),
+                  ),
+                );
+              },
+              selectedBuilder: (context, date, _) {
+                return Container(
+                  margin: const EdgeInsets.all(4),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade400,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${date.day}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
+              },
+              todayBuilder: (context, date, _) {
+                return Container(
+                  margin: const EdgeInsets.all(4),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${date.day}',
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
               itemCount: _selectedEvents.length,
               itemBuilder: (context, index) {
-                final event = _selectedEvents[index];
-                return ListTile(
-                  title: Text(event['title'] ?? ''),
-                  subtitle: Text(event['category'] ?? ''),
+                final event = _selectedEvents[index] as Map<String, dynamic>;
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: event['displayColor'] as Color? ?? Colors.blue.shade300,
+                      ),
+                    ),
+                    title: Text(event['title'] ?? ''),
+                    subtitle: Text(event['category'] ?? ''),
+                  ),
                 );
               },
             ),

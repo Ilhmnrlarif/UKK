@@ -390,69 +390,69 @@ class _AddTaskPageState extends State<AddTaskPage> {
         ),
       ),
       child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Tambah Tugas',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Tambah Tugas',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+                color: Colors.grey,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Input field dan button dalam satu row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Input field dan button dalam satu row
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+                  child: TextField(
+                    controller: _taskController,
+                    decoration: const InputDecoration(
+                      hintText: 'Masukan tugas baru disini',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(color: Colors.grey),
                     ),
-                    child: TextField(
-                      controller: _taskController,
-                      decoration: const InputDecoration(
-                        hintText: 'Masukan tugas baru disini',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(color: Colors.grey),
-                      ),
-                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF69D1F7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: _isLoading 
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Icon(Icons.play_arrow, color: Colors.white),
-                    onPressed: _isLoading ? null : _createTask,
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF69D1F7),
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
+                child: IconButton(
+                  icon: _isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(Icons.play_arrow, color: Colors.white),
+                  onPressed: _isLoading ? null : _createTask,
+                ),
+              ),
+            ],
+          ),
             if (_showSubtaskInput) ...[
               const SizedBox(height: 10),
               Row(
@@ -558,53 +558,53 @@ class _AddTaskPageState extends State<AddTaskPage> {
             Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: [
-                _buildCategoryButton(),
-                // Tanggal
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
+            children: [
+              _buildCategoryButton(),
+              // Tanggal
+              GestureDetector(
+                onTap: _pickDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        if (_dueDate != null) ...[
-                          const SizedBox(width: 4),
-                          Text(
-                            _formatDate(_dueDate!),
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      if (_dueDate != null) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(_dueDate!),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
+              ),
                 GestureDetector(
                   onTap: _showPriorityDialog,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
+                  children: [
+                    Icon(
                           Icons.flag,
-                          size: 16,
+                      size: 16,
                           color: _selectedPriority != null 
                               ? priorities[_selectedPriority]
                               : Colors.grey[600],
@@ -614,7 +614,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                           Text(
                             _selectedPriority!,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                      color: Colors.grey[600],
                               fontSize: 12,
                             ),
                           ),
@@ -631,27 +631,27 @@ class _AddTaskPageState extends State<AddTaskPage> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.checklist,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ],
-                    ),
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(20),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
+                child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                          Icons.checklist,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ],
+                    ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
         ),
       ),
     );
