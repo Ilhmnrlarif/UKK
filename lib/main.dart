@@ -4,6 +4,7 @@ import 'package:to_do_list/form/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:to_do_list/config/supabase_config.dart';
 import 'package:intl/intl.dart';
+import 'package:to_do_list/page/splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,18 +16,22 @@ void main() async {
 
   await initializeDateFormatting('id_ID', null);
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'To Do List',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
       ),
-      home: LoginPage(),
+      home: const SplashPage(),
     );
   }
 }

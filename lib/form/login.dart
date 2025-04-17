@@ -17,6 +17,25 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      // Jika user sudah login, langsung arahkan ke halaman utama
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const BottomNav(),
+        ),
+      );
+    }
+  }
+
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
