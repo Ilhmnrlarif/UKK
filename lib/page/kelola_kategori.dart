@@ -213,8 +213,9 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                 ),
                 if (_showColorPicker) ...[
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       ...CategoryColor.colors.map((color) => GestureDetector(
                         onTap: () {
@@ -224,8 +225,8 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                           });
                         },
                         child: Container(
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: color,
                             shape: BoxShape.circle,
@@ -237,13 +238,13 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                       )),
                       // Custom color picker (disabled for now)
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.grey[300]!),
                         ),
-                        child: Icon(Icons.color_lens, color: Colors.grey[400], size: 20),
+                        child: Icon(Icons.color_lens, color: Colors.grey[400], size: 18),
                       ),
                     ],
                   ),
