@@ -926,14 +926,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             .from('task_attachments')
             .getPublicUrl(fileName);
 
-        // Update task dengan URL attachment
-        final List<String> updatedUrls = [..._attachmentUrls, publicUrl];
-        await Supabase.instance.client
-            .from('tasks')
-            .update({'attachment_url': updatedUrls})
-            .eq('id', widget.task['id']);
+        // Update state terlebih dahulu untuk tampilan langsung
+        setState(() {
+          _attachmentUrls = [..._attachmentUrls, publicUrl];
+        });
 
-        setState(() => _attachmentUrls = updatedUrls);
+        // Update task dengan URL attachment
+        final updatedTask = await Supabase.instance.client
+            .from('tasks')
+            .update({'attachment_url': _attachmentUrls})
+            .eq('id', widget.task['id'])
+            .select()
+            .single();
+            
+        // Update parent widget
+        widget.onTaskUpdated(updatedTask);
         
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -943,7 +950,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           ),
         );
       } catch (e) {
-        print('Error uploading image: $e'); // Tambahkan log untuk debugging
+        print('Error uploading image: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -990,6 +997,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     try {
       setState(() => _isLoading = true);
       
+      // Update state terlebih dahulu untuk tampilan langsung
+      setState(() {
+        widget.task['title'] = _taskTitleController.text;
+        _isEditingTitle = false;
+      });
+
+      // Update task di database
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
@@ -1001,10 +1015,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
       widget.onTaskUpdated(updatedTask);
 
-      setState(() {
-        _isEditingTitle = false;
-      });
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1013,9 +1023,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       );
     } catch (e) {
+      // Jika terjadi error, kembalikan judul ke nilai sebelumnya
+      setState(() {
+        widget.task['title'] = widget.task['title'];
+        _taskTitleController.text = widget.task['title'];
+      });
+      
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error memperbarui judul: $e')),
+        SnackBar(
+          content: Text('Error memperbarui judul: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => _isLoading = false);
