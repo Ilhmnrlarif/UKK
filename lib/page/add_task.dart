@@ -137,6 +137,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Pilih Prioritas'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -554,7 +555,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 );
               }).toList(),
             ],
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
             Wrap(
               spacing: 10,
               runSpacing: 10,

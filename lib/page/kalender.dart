@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:to_do_list/page/add_task.dart';
 
 class KalenderPage extends StatefulWidget {
   const KalenderPage({Key? key}) : super(key: key);
@@ -301,6 +302,37 @@ class _KalenderPageState extends State<KalenderPage> {
           ),
         ],
       ),
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        child: FloatingActionButton(
+          onPressed: () async {
+            final result = await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: const AddTaskPage(),
+              ),
+            );
+            
+            // Reload tasks jika ada task baru ditambahkan
+            if (result == true) {
+              _loadTasks();
+            }
+          },
+          backgroundColor: const Color(0xFF69D1F7),
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+          ),
+          shape: const CircleBorder(),
+          elevation: 2,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
