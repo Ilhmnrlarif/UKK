@@ -183,6 +183,105 @@ class _TaskPageState extends State<TaskPage> {
     });
   }
 
+  Future<void> _updateTaskPriority(String taskId, String newPriority) async {
+    try {
+      setState(() => _isLoading = true);
+      
+      // Update di Supabase
+      final updatedTask = await Supabase.instance.client
+          .from('tasks')
+          .update({
+            'priority': newPriority,
+          })
+          .eq('id', taskId)
+          .select()
+          .single();
+
+      // Update state lokal
+      setState(() {
+        final index = _tasks.indexWhere((task) => task['id'] == taskId);
+        if (index != -1) {
+          _tasks[index] = updatedTask;
+        }
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Prioritas berhasil diperbarui'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error memperbarui prioritas: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showPriorityMenu(BuildContext context, Map<String, dynamic> task, RenderBox buttonBox, Offset buttonPosition) {
+    final Size size = buttonBox.size;
+    
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        buttonPosition.dx - 10, // Sedikit ke kiri dari ikon
+        buttonPosition.dy - size.height, // Sejajar dengan task
+        buttonPosition.dx + size.width,
+        buttonPosition.dy,
+      ),
+      items: [
+        PopupMenuItem(
+          height: 40,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.flag, color: Colors.red, size: 20),
+              const SizedBox(width: 8),
+              const Text('High', style: TextStyle(fontSize: 14)),
+            ],
+          ),
+          onTap: () => _updateTaskPriority(task['id'], 'High'),
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.flag, color: Colors.yellow[700], size: 20),
+              const SizedBox(width: 8),
+              const Text('Medium', style: TextStyle(fontSize: 14)),
+            ],
+          ),
+          onTap: () => _updateTaskPriority(task['id'], 'Medium'),
+        ),
+        PopupMenuItem(
+          height: 40,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.flag, color: Colors.green, size: 20),
+              const SizedBox(width: 8),
+              const Text('Easy', style: TextStyle(fontSize: 14)),
+            ],
+          ),
+          onTap: () => _updateTaskPriority(task['id'], 'Easy'),
+        ),
+      ],
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      color: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -484,7 +583,7 @@ class _TaskPageState extends State<TaskPage> {
         case 'High':
           return Colors.red;
         case 'Medium':
-          return Colors.orange;
+          return Colors.yellow[700]!;
         case 'Easy':
           return Colors.green;
         default:
@@ -609,14 +708,23 @@ class _TaskPageState extends State<TaskPage> {
                   color: Colors.blue[300],
                 ),
               ),
-            // Indikator prioritas
-            if (task['priority'] != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Icon(
-                  Icons.flag,
-                  size: 20,
-                  color: getPriorityColor(task['priority']),
+            // Indikator prioritas yang bisa diklik
+            if (!_isSelectionMode)
+              Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () {
+                    final RenderBox button = context.findRenderObject() as RenderBox;
+                    final Offset position = button.localToGlobal(Offset.zero);
+                    _showPriorityMenu(context, task, button, position);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Icon(
+                      Icons.flag,
+                      size: 20,
+                      color: getPriorityColor(task['priority']),
+                    ),
+                  ),
                 ),
               ),
             if (task['due_date'] != null)
