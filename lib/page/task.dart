@@ -5,6 +5,7 @@ import 'package:to_do_list/page/task_detail.dart';
 import 'package:to_do_list/page/history_task.dart';
 import 'package:to_do_list/page/side_bar.dart';
 import 'package:to_do_list/page/kelola_kategori.dart';
+import 'package:to_do_list/page/search_task.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({Key? key}) : super(key: key);
@@ -341,7 +342,12 @@ class _TaskPageState extends State<TaskPage> {
                   ).then((_) => _loadCategories());
                   break;
                 case 'telusuri':
-                  // TODO: Implementasi telusuri
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SearchTaskPage(),
+                    ),
+                  );
                   break;
                 case 'cetak':
                   // TODO: Implementasi cetak tugas

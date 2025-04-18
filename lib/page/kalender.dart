@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:to_do_list/page/add_task.dart';
+import 'package:to_do_list/page/task_detail.dart';
 
 class KalenderPage extends StatefulWidget {
   const KalenderPage({Key? key}) : super(key: key);
@@ -103,6 +104,42 @@ class _KalenderPageState extends State<KalenderPage> {
     final events = _events[normalizedDay] ?? [];
     debugPrint('Getting events for $normalizedDay: ${events.length} events found');
     return events;
+  }
+
+  Color _getPriorityColor(String? priority) {
+    switch (priority) {
+      case 'High':
+        return Colors.red;
+      case 'Medium':
+        return Colors.yellow[700]!;
+      case 'Easy':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _onTaskUpdated(Map<String, dynamic> updatedTask) {
+    setState(() {
+      // Update events map
+      if (updatedTask['due_date'] != null) {
+        final date = DateTime.parse(updatedTask['due_date']).toLocal();
+        final key = DateTime(date.year, date.month, date.day);
+        
+        // Update the task in events
+        if (_events.containsKey(key)) {
+          final index = _events[key]!.indexWhere((task) => task['id'] == updatedTask['id']);
+          if (index != -1) {
+            _events[key]![index] = updatedTask;
+          }
+        }
+        
+        // Update selected events if the updated task is for the selected day
+        if (_selectedDay != null && isSameDay(key, _selectedDay!)) {
+          _selectedEvents = _getEventsForDay(_selectedDay!);
+        }
+      }
+    });
   }
 
   @override
@@ -295,6 +332,46 @@ class _KalenderPageState extends State<KalenderPage> {
                     ),
                     title: Text(event['title'] ?? ''),
                     subtitle: Text(event['category'] ?? ''),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Indikator subtask
+                        if (event['subtasks'] != null && 
+                            (event['subtasks'] as List).isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              Icons.assignment,
+                              size: 20,
+                              color: Colors.blue[300],
+                            ),
+                          ),
+                        // Indikator priority
+                        if (event['priority'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              Icons.flag,
+                              size: 20,
+                              color: _getPriorityColor(event['priority']),
+                            ),
+                          ),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TaskDetailPage(
+                            task: event,
+                            onTaskUpdated: _onTaskUpdated,
+                          ),
+                        ),
+                      ).then((_) {
+                        // Reload tasks setelah kembali dari detail
+                        _loadTasks();
+                      });
+                    },
                   ),
                 );
               },
