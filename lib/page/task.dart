@@ -341,16 +341,13 @@ class _TaskPageState extends State<TaskPage> {
                     ),
                   ).then((_) => _loadCategories());
                   break;
-                case 'telusuri':
+                case 'Cari Tugas':
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SearchTaskPage(),
                     ),
                   );
-                  break;
-                case 'cetak':
-                  // TODO: Implementasi cetak tugas
                   break;
               }
             },
@@ -360,12 +357,8 @@ class _TaskPageState extends State<TaskPage> {
                 child: Text('Kelola Kategori'),
               ),
               const PopupMenuItem<String>(
-                value: 'telusuri',
-                child: Text('Telusuri'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'cetak',
-                child: Text('Cetak Tugas'),
+                value: 'Cari Tugas',
+                child: Text('Cari Tugas'),
               ),
             ],
           ),

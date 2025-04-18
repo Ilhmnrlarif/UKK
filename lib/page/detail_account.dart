@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:to_do_list/form/login.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DetailAccountPage extends StatefulWidget {
   const DetailAccountPage({Key? key}) : super(key: key);
@@ -12,7 +13,9 @@ class DetailAccountPage extends StatefulWidget {
 class _DetailAccountPageState extends State<DetailAccountPage> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _picker = ImagePicker();
   bool _isLoading = false;
+  String? avatarUrl;
 
   @override
   void initState() {
@@ -26,17 +29,66 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
       if (userId != null) {
         final data = await Supabase.instance.client
             .from('profiles')
-            .select('username, email')
+            .select('username, email, avatar_url')
             .eq('id', userId)
             .single();
         
         setState(() {
           _usernameController.text = data['username'] ?? '';
           _emailController.text = data['email'] ?? '';
+          avatarUrl = data['avatar_url'];
         });
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _deleteProfilePhoto() async {
+    try {
+      setState(() => _isLoading = true);
+
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      if (avatarUrl != null) {
+        // Ekstrak nama file dari URL
+        final fileName = avatarUrl!.split('/').last;
+        
+        // Hapus file dari storage
+        await Supabase.instance.client
+            .storage
+            .from('avatars')
+            .remove([fileName]);
+
+        // Update profile dengan menghapus avatar_url
+        await Supabase.instance.client
+            .from('profiles')
+            .update({'avatar_url': null})
+            .eq('id', userId);
+
+        setState(() {
+          avatarUrl = null;
+        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil berhasil dihapus'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus foto: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -84,6 +136,89 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
     }
   }
 
+  Future<void> _uploadProfilePhoto() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isLoading = true);
+
+      // Debug: Print file path dan extension
+      print('File path: ${image.path}');
+
+      // Baca file sebagai bytes
+      final bytes = await image.readAsBytes();
+      
+      // Generate nama file yang unik dengan ekstensi .jpg
+      final String userId = Supabase.instance.client.auth.currentUser!.id;
+      final String fileName = 'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      print('Uploading file: $fileName');
+
+      // Upload ke bucket avatars
+      final String path = await Supabase.instance.client
+          .storage
+          .from('avatars')
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: 'image/jpeg',
+              upsert: true,
+            ),
+          );
+
+      print('File berhasil diupload ke: $path');
+
+      // Dapatkan public URL
+      final String publicUrl = Supabase.instance.client
+          .storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+      print('Public URL: $publicUrl');
+
+      // Update profile dengan URL avatar baru
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'avatar_url': publicUrl,
+          })
+          .eq('id', userId);
+
+      setState(() {
+        avatarUrl = publicUrl;
+        _isLoading = false;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print('Error uploading image: $e');
+      setState(() => _isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengupload foto: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +256,88 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      'Foto Profil',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Column(
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: _isLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : avatarUrl != null
+                                        ? ClipOval(
+                                            child: Image.network(
+                                              avatarUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return const Icon(
+                                                  Icons.person_outline,
+                                                  color: Colors.grey,
+                                                  size: 50,
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.person_outline,
+                                            color: Colors.grey,
+                                            size: 50,
+                                          ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: GestureDetector(
+                                  onTap: _isLoading ? null : _uploadProfilePhoto,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF69D1F7),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (avatarUrl != null)
+                            TextButton.icon(
+                              onPressed: _isLoading ? null : _deleteProfilePhoto,
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              label: Text(
+                                'Hapus Foto Profil',
+                                style: TextStyle(
+                                  color: Colors.red[400],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                     const Text(
                       'Informasi Akun',
                       style: TextStyle(
@@ -277,4 +494,5 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
     super.dispose();
   }
 }
+
 

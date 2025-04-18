@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'detail_account.dart';
 
 class AccountPage extends StatefulWidget {
@@ -14,10 +19,13 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   String? username;
   String? email;
+  String? avatarUrl;
   List<String> categories = [];
   int _completedTasks = 0;
   int _pendingTasks = 0;
   Map<DateTime, int> _dailyCompletions = {};
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -33,7 +41,7 @@ class _AccountPageState extends State<AccountPage> {
       if (userId != null) {
         final data = await Supabase.instance.client
             .from('profiles')
-            .select('username, email, category')
+            .select('username, email, category, avatar_url')
             .eq('id', userId)
             .single();
         
@@ -41,6 +49,7 @@ class _AccountPageState extends State<AccountPage> {
           username = data['username'];
           email = data['email'];
           categories = List<String>.from(data['category']);
+          avatarUrl = data['avatar_url'];
         });
       }
     } catch (e) {
@@ -108,6 +117,136 @@ class _AccountPageState extends State<AccountPage> {
     } catch (e) {
       debugPrint('Error loading daily completions: $e');
     }
+  }
+
+  Future<void> _uploadImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isLoading = true);
+
+      // Debug: Print file path dan extension
+      print('File path: ${image.path}');
+      final String originalFileExt = image.path.split('.').last.toLowerCase();
+      print('Original file extension: $originalFileExt');
+
+      // Baca file sebagai bytes
+      final bytes = await image.readAsBytes();
+      
+      // Generate nama file yang unik dengan ekstensi .jpg
+      final String userId = Supabase.instance.client.auth.currentUser!.id;
+      final String fileName = 'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      print('Uploading file: $fileName');
+
+      // Upload ke bucket avatars
+      final String path = await Supabase.instance.client
+          .storage
+          .from('avatars')
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: 'image/jpeg',
+              upsert: true,
+            ),
+          );
+
+      print('File berhasil diupload ke: $path');
+
+      // Dapatkan public URL
+      final String publicUrl = Supabase.instance.client
+          .storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+      print('Public URL: $publicUrl');
+
+      // Update profile dengan URL avatar baru
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'avatar_url': publicUrl,
+          })
+          .eq('id', userId);
+
+      setState(() {
+        avatarUrl = publicUrl;
+        _isLoading = false;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print('Error uploading image: $e');
+      setState(() => _isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengupload foto: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  Widget _buildProfileImage() {
+    if (_isLoading) {
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: avatarUrl != null && avatarUrl!.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                avatarUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading image: $error');
+                  return const Icon(
+                    Icons.person_outline,
+                    color: Colors.grey,
+                    size: 40,
+                  );
+                },
+              ),
+            )
+          : const Icon(
+              Icons.person_outline,
+              color: Colors.grey,
+              size: 40,
+            ),
+    );
   }
 
   Widget _buildDailyCompletionChart() {
@@ -188,62 +327,73 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             const SizedBox(height: 60),
             // Profile Section
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DetailAccountPage(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _uploadImage,
+                    child: Stack(
+                      children: [
+                        _buildProfileImage(),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF69D1F7),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ).then((_) => _loadUserData()); // Reload data after returning from detail page
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.person_outline,
-                        color: Colors.grey,
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            username ?? 'Loading...',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          username ?? 'Loading...',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            email ?? '',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          email ?? '',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Icon(
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DetailAccountPage(),
+                        ),
+                      ).then((_) => _loadUserData());
+                    },
+                    child: Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.grey[400],
                       size: 16,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 30),
