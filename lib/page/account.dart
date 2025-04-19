@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
@@ -23,7 +23,7 @@ class _AccountPageState extends State<AccountPage> {
   List<String> categories = [];
   int _completedTasks = 0;
   int _pendingTasks = 0;
-  Map<DateTime, int> _dailyCompletions = {};
+  List<ChartData> _chartData = [];
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
@@ -32,7 +32,6 @@ class _AccountPageState extends State<AccountPage> {
     super.initState();
     _loadUserData();
     _loadTaskSummary();
-    _loadDailyCompletions();
   }
 
   Future<void> _loadUserData() async {
@@ -61,61 +60,44 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
-        // Mengambil tugas yang selesai
-        final completedResponse = await Supabase.instance.client
-            .from('tasks')
-            .select()
-            .eq('user_id', userId)
-            .eq('is_completed', true);
-        
-        // Mengambil tugas yang belum selesai
-        final pendingResponse = await Supabase.instance.client
-            .from('tasks')
-            .select()
-            .eq('user_id', userId)
-            .eq('is_completed', false);
-
-        setState(() {
-          _completedTasks = completedResponse.length;
-          _pendingTasks = pendingResponse.length;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading task summary: $e');
-    }
-  }
-
-  Future<void> _loadDailyCompletions() async {
-    try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId != null) {
-        // Mengambil data 7 hari terakhir
-        final DateTime now = DateTime.now();
-        final DateTime weekAgo = now.subtract(const Duration(days: 7));
-
+        // Mengambil semua tugas
         final response = await Supabase.instance.client
             .from('tasks')
             .select()
-            .eq('user_id', userId)
-            .eq('is_completed', true)
-            .gte('completed_at', weekAgo.toIso8601String())
-            .lte('completed_at', now.toIso8601String());
+            .eq('user_id', userId);
 
-        Map<DateTime, int> dailyCount = {};
+        int completed = 0;
+        int pending = 0;
+
         for (var task in response) {
-          if (task['completed_at'] != null) {
-            final date = DateTime.parse(task['completed_at']).toLocal();
-            final dateKey = DateTime(date.year, date.month, date.day);
-            dailyCount[dateKey] = (dailyCount[dateKey] ?? 0) + 1;
+          if (task['is_completed'] == true) {
+            completed++;
+          } else {
+            pending++;
           }
         }
 
         setState(() {
-          _dailyCompletions = dailyCount;
+          _completedTasks = completed;
+          _pendingTasks = pending;
+
+          // Update chart data
+          _chartData = [
+            ChartData(
+              'Selesai',
+              completed.toDouble(),
+              const Color(0xFF4CAF50), // Hijau untuk tugas selesai
+            ),
+            ChartData(
+              'Belum Selesai',
+              pending.toDouble(),
+              const Color(0xFFF44336), // Merah untuk tugas tertunda
+            ),
+          ];
         });
       }
     } catch (e) {
-      debugPrint('Error loading daily completions: $e');
+      debugPrint('Error loading task summary: $e');
     }
   }
 
@@ -177,7 +159,7 @@ class _AccountPageState extends State<AccountPage> {
           })
           .eq('id', userId);
 
-      setState(() {
+        setState(() {
         avatarUrl = publicUrl;
         _isLoading = false;
       });
@@ -245,75 +227,50 @@ class _AccountPageState extends State<AccountPage> {
               Icons.person_outline,
               color: Colors.grey,
               size: 40,
-            ),
+      ),
     );
   }
 
   Widget _buildDailyCompletionChart() {
-    final List<BarChartGroupData> barGroups = [];
-    final DateTime now = DateTime.now();
-    
-    // Membuat data untuk 7 hari
-    for (int i = 6; i >= 0; i--) {
-      final date = now.subtract(Duration(days: i));
-      final count = _dailyCompletions[date] ?? 0;
-      
-      barGroups.add(
-        BarChartGroupData(
-          x: 6 - i,
-          barRods: [
-            BarChartRodData(
-              toY: count.toDouble(),
-              color: const Color(0xFF69D1F7),
-              width: 20,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return AspectRatio(
-      aspectRatio: 2,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 12,
-          barGroups: barGroups,
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 30,
-                getTitlesWidget: (value, meta) {
-                  if (value == 0) return const Text('0');
-                  if (value == 6) return const Text('6');
-                  if (value == 12) return const Text('12');
-                  return const Text('');
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final date = now.subtract(Duration(days: (6 - value).toInt()));
-                  return Text(
-                    DateFormat('E').format(date).substring(0, 3),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+    return Container(
+      height: 300,
+      padding: const EdgeInsets.all(16),
+      child: SfCircularChart(
+        title: ChartTitle(
+          text: 'Status Tugas',
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-          borderData: FlBorderData(show: false),
         ),
+        legend: Legend(
+          isVisible: true,
+          position: LegendPosition.bottom,
+          overflowMode: LegendItemOverflowMode.wrap,
+          textStyle: const TextStyle(
+            fontSize: 12,
+          ),
+        ),
+        series: <CircularSeries>[
+          DoughnutSeries<ChartData, String>(
+            dataSource: _chartData,
+            xValueMapper: (ChartData data, _) => data.x,
+            yValueMapper: (ChartData data, _) => data.y,
+            pointColorMapper: (ChartData data, _) => data.color,
+            innerRadius: '60%',
+            dataLabelSettings: DataLabelSettings(
+              isVisible: true,
+              labelPosition: ChartDataLabelPosition.outside,
+              textStyle: const TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.w500,
+              ),
+              builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
+                return Text('${data.x}\n${data.y.toInt()} tugas');
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -343,9 +300,9 @@ class _AccountPageState extends State<AccountPage> {
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
                               color: Color(0xFF69D1F7),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
                               Icons.camera_alt,
                               color: Colors.white,
                               size: 12,
@@ -504,7 +461,7 @@ class _AccountPageState extends State<AccountPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _dailyCompletions.isEmpty
+                  _chartData.isEmpty
                       ? Container(
                           height: 200,
                           alignment: Alignment.center,
@@ -526,4 +483,11 @@ class _AccountPageState extends State<AccountPage> {
       ),
     );
   }
+}
+
+class ChartData {
+  ChartData(this.x, this.y, this.color);
+  final String x;
+  final double y;
+  final Color color;
 }

@@ -264,21 +264,21 @@ class _SideBarState extends State<SideBar> {
   Widget build(BuildContext context) {
     return Drawer(
       backgroundColor: Colors.white,
-      child: Column(
-        children: [
+        child: Column(
+          children: [
           // Header
-          Container(
-            width: double.infinity,
-            height: 120,
-            color: const Color(0xFF69D1F7),
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+            Container(
+              width: double.infinity,
+              height: 120,
+              color: const Color(0xFF69D1F7),
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
             child: const Text(
-              "Kategori",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+                    "Kategori",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
             ),
           ),
           
@@ -291,109 +291,109 @@ class _SideBarState extends State<SideBar> {
                 Theme(
                   data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
-                    initiallyExpanded: _isCategoryExpanded,
+              initiallyExpanded: _isCategoryExpanded,
                     tilePadding: const EdgeInsets.symmetric(horizontal: 20),
-                    leading: const Icon(
-                      Icons.grid_view,
-                      color: Color(0xFF69D1F7),
-                      size: 20,
-                    ),
-                    title: const Text(
-                      "Kategori",
-                      style: TextStyle(
-                        fontSize: 14,
+              leading: const Icon(
+                Icons.grid_view,
+                color: Color(0xFF69D1F7),
+                size: 20,
+              ),
+              title: const Text(
+                "Kategori",
+                style: TextStyle(
+                  fontSize: 14,
                         fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    onExpansionChanged: (expanded) {
-                      setState(() => _isCategoryExpanded = expanded);
-                    },
-                    children: _categories.map((category) {
-                      return ListTile(
+                ),
+              ),
+              onExpansionChanged: (expanded) {
+                setState(() => _isCategoryExpanded = expanded);
+              },
+              children: _categories.map((category) {
+                return ListTile(
                         leading: const SizedBox(
-                          width: 20,
-                          height: 20,
+                    width: 20,
+                    height: 20,
                           child: Icon(
                             Icons.radio_button_unchecked,
                             size: 20,
                             color: Color(0xFF69D1F7),
-                          ),
-                        ),
-                        title: Text(
-                          category,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        trailing: IconButton(
+                    ),
+                  ),
+                  title: Text(
+                    category,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_outline,
                             color: Colors.red,
                             size: 20,
                           ),
-                          onPressed: () => _deleteCategory(category),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-                      );
-                    }).toList(),
+                    onPressed: () => _deleteCategory(category),
                   ),
-                ),
-
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 32),
+                );
+              }).toList(),
+                  ),
+            ),
+            
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(height: 1),
                 ),
-
+            
                 // Tasks Section
-                if (_tasks.isNotEmpty) ...[
-                  Padding(
+            if (_tasks.isNotEmpty) ...[
+              Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                    child: Text(
-                      "Tugas",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                child: Text(
+                  "Tugas",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                         color: Colors.grey[800],
-                      ),
-                    ),
                   ),
-                  ..._tasks.take(5).map((task) => 
-                    ListTile(
+                ),
+              ),
+              ..._tasks.take(5).map((task) => 
+                ListTile(
                       leading: const SizedBox(
-                        width: 20,
-                        height: 20,
+                    width: 20,
+                    height: 20,
                         child: Icon(
                           Icons.radio_button_unchecked,
                           size: 20,
                           color: Color(0xFF69D1F7),
-                        ),
-                      ),
-                      title: Text(
-                        task['title'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: IconButton(
+                    ),
+                  ),
+                  title: Text(
+                    task['title'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: IconButton(
                         icon: const Icon(
                           Icons.delete_outline,
                           color: Colors.red,
                           size: 20,
                         ),
-                        onPressed: () => _deleteTask(task['id']),
-                      ),
+                    onPressed: () => _deleteTask(task['id']),
+                  ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-                      onTap: () {
-                        widget.onTaskSelected(task['id']);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ).toList(),
-                ],
-
+                  onTap: () {
+                    widget.onTaskSelected(task['id']);
+                    Navigator.pop(context);
+                  },
+                ),
+              ).toList(),
+            ],
+            
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(height: 1),
@@ -402,15 +402,15 @@ class _SideBarState extends State<SideBar> {
                 // Add New Category Button
                 ListTile(
                   leading: const Icon(
-                    Icons.add,
-                    color: Color(0xFF69D1F7),
-                    size: 20,
-                  ),
-                  title: const Text(
-                    "Buat Baru",
-                    style: TextStyle(
+                      Icons.add,
                       color: Color(0xFF69D1F7),
-                      fontSize: 14,
+                      size: 20,
+                    ),
+                  title: const Text(
+                      "Buat Baru",
+                      style: TextStyle(
+                      color: Color(0xFF69D1F7),
+                        fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -419,8 +419,8 @@ class _SideBarState extends State<SideBar> {
                 ),
               ],
             ),
-          ),
-        ],
+            ),
+          ],
       ),
     );
   }
