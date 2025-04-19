@@ -232,6 +232,20 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildDailyCompletionChart() {
+    if (_chartData.isEmpty) {
+      return Container(
+        height: 200,
+        alignment: Alignment.center,
+        child: Text(
+          'Tidak ada data tugas',
+          style: TextStyle(
+            color: Colors.grey[500],
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: 300,
       padding: const EdgeInsets.all(16),
@@ -251,6 +265,13 @@ class _AccountPageState extends State<AccountPage> {
             fontSize: 12,
           ),
         ),
+        annotations: <CircularChartAnnotation>[
+          CircularChartAnnotation(
+            widget: Container(
+              child: const Text(''),
+            ),
+          ),
+        ],
         series: <CircularSeries>[
           DoughnutSeries<ChartData, String>(
             dataSource: _chartData,
@@ -261,13 +282,70 @@ class _AccountPageState extends State<AccountPage> {
             dataLabelSettings: DataLabelSettings(
               isVisible: true,
               labelPosition: ChartDataLabelPosition.outside,
+              connectorLineSettings: const ConnectorLineSettings(
+                type: ConnectorType.curve,
+                length: '25%',
+              ),
               textStyle: const TextStyle(
-                fontSize: 12, 
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
               builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
-                return Text('${data.x}\n${data.y.toInt()} tugas');
+                return Text(
+                  '${data.x}\n${data.y.toInt()} tugas',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(String title, int count, Color color) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'tugas',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -461,19 +539,7 @@ class _AccountPageState extends State<AccountPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _chartData.isEmpty
-                      ? Container(
-                          height: 200,
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Tidak ada data tugas',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 16,
-                            ),
-                          ),
-                        )
-                      : _buildDailyCompletionChart(),
+                  _buildDailyCompletionChart(),
                 ],
               ),
             ),

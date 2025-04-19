@@ -29,7 +29,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   String? _category;
   List<String> _availableCategories = [];
   final TextEditingController _subtaskController = TextEditingController();
-  List<String> _subtasks = [];
+  List<Map<String, dynamic>> _subtasks = [];
   bool _showSubtaskInput = false;
   final TextEditingController _taskTitleController = TextEditingController();
   bool _isEditingTitle = false;
@@ -65,7 +65,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     _category = widget.task['category'];
     if (widget.task['subtasks'] != null) {
       final List<dynamic> subtasksJson = widget.task['subtasks'] as List<dynamic>;
-      _subtasks = subtasksJson.map((task) => task.toString()).toList();
+      _subtasks = subtasksJson.map((task) {
+        if (task is Map<String, dynamic>) {
+          return task;
+        } else {
+          return {
+            'text': task.toString(),
+            'is_completed': false
+          };
+        }
+      }).toList();
     } else {
       _subtasks = [];
     }
@@ -166,7 +175,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     try {
       setState(() => _isLoading = true);
       
-      List<String> updatedSubtasks = List.from(_subtasks);
+      List<Map<String, dynamic>> updatedSubtasks = List.from(_subtasks);
       updatedSubtasks.removeAt(index);
       
       final updatedTask = await Supabase.instance.client
@@ -218,6 +227,17 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              widget.task['is_completed'] == true
+                  ? Icons.check_circle
+                  : Icons.check_circle_outline,
+              color: widget.task['is_completed'] == true
+                  ? Colors.green
+                  : Colors.grey,
+            ),
+            onPressed: () => _updateTaskStatus(!(widget.task['is_completed'] ?? false)),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: () async {
@@ -437,19 +457,33 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         final subtask = entry.value;
                         
                         if (!_subtaskControllers.containsKey(index)) {
-                          _subtaskControllers[index] = TextEditingController(text: subtask);
+                          _subtaskControllers[index] = TextEditingController(text: subtask['text']);
                         }
                         
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.grey[400]!),
+                              GestureDetector(
+                                onTap: () => _toggleSubtaskStatus(index),
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: subtask['is_completed'] == true
+                                          ? Colors.green
+                                          : Colors.grey[400]!,
+                                    ),
+                                  ),
+                                  child: subtask['is_completed'] == true
+                                      ? const Icon(
+                                          Icons.check,
+                                          size: 16,
+                                          color: Colors.green,
+                                        )
+                                      : null,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -459,9 +493,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                         height: 20,
                                         child: TextField(
                                           controller: _subtaskControllers[index],
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.black87,
+                                            decoration: subtask['is_completed'] == true
+                                                ? TextDecoration.lineThrough
+                                                : null,
                                           ),
                                           decoration: InputDecoration(
                                             isDense: true,
@@ -490,7 +527,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                                     onPressed: () {
                                                       setState(() {
                                                         _editingSubtasks[index] = false;
-                                                        _subtaskControllers[index]!.text = subtask;
+                                                        _subtaskControllers[index]!.text = subtask['text'];
                                                       });
                                                     },
                                                   ),
@@ -509,10 +546,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                           });
                                         },
                                         child: Text(
-                                          subtask,
-                                          style: const TextStyle(
+                                          subtask['text'],
+                                          style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.black87,
+                                            decoration: subtask['is_completed'] == true
+                                                ? TextDecoration.lineThrough
+                                                : null,
                                           ),
                                         ),
                                       ),
@@ -567,7 +607,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 onSubmitted: (value) async {
                                   if (value.isNotEmpty) {
                                     setState(() {
-                                      _subtasks.add(value);
+                                      _subtasks.add({
+                                        'text': value,
+                                        'is_completed': false
+                                      });
                                       _subtaskController.clear();
                                       _showSubtaskInput = false;
                                     });
@@ -1113,8 +1156,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     try {
       setState(() => _isLoading = true);
       
-      List<String> updatedSubtasks = List.from(_subtasks);
-      updatedSubtasks[index] = newText;
+      List<Map<String, dynamic>> updatedSubtasks = List.from(_subtasks);
+      updatedSubtasks[index]['text'] = newText;
       
       final updatedTask = await Supabase.instance.client
           .from('tasks')
@@ -1188,6 +1231,122 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Gagal menghapus lampiran'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleSubtaskStatus(int index) async {
+    try {
+      setState(() => _isLoading = true);
+      
+      // Update status subtask
+      setState(() {
+        _subtasks[index]['is_completed'] = !(_subtasks[index]['is_completed'] ?? false);
+      });
+
+      // Update task di database
+      final updatedTask = await Supabase.instance.client
+          .from('tasks')
+          .update({
+            'subtasks': _subtasks,
+          })
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.onTaskUpdated(updatedTask);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_subtasks[index]['is_completed'] 
+              ? 'Tugas sampingan selesai' 
+              : 'Tugas sampingan dibatalkan'),
+          backgroundColor: _subtasks[index]['is_completed'] 
+              ? Colors.green 
+              : Colors.grey,
+        ),
+      );
+    } catch (e) {
+      // Kembalikan status jika gagal
+      setState(() {
+        _subtasks[index]['is_completed'] = !(_subtasks[index]['is_completed'] ?? false);
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error mengubah status: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  bool _areAllSubtasksCompleted() {
+    if (_subtasks.isEmpty) return true;
+    return _subtasks.every((subtask) => subtask['is_completed'] == true);
+  }
+
+  Future<void> _updateTaskStatus(bool newStatus) async {
+    // Jika task sudah selesai, tidak bisa diubah kembali
+    if (widget.task['is_completed'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas yang sudah selesai tidak dapat diubah kembali'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Cek apakah semua subtask sudah selesai
+    if (newStatus && !_areAllSubtasksCompleted()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selesaikan semua tugas sampingan terlebih dahulu'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      setState(() => _isLoading = true);
+      
+      final now = DateTime.now().toIso8601String();
+      
+      final updatedTask = await Supabase.instance.client
+          .from('tasks')
+          .update({
+            'is_completed': true, // Selalu set ke true karena hanya bisa menyelesaikan
+            'completed_at': now,
+          })
+          .eq('id', widget.task['id'])
+          .select()
+          .single();
+
+      widget.task['is_completed'] = true;
+      widget.onTaskUpdated(updatedTask);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas selesai'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error mengubah status: $e'),
           backgroundColor: Colors.red,
         ),
       );

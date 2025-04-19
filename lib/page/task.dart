@@ -67,6 +67,13 @@ class _TaskPageState extends State<TaskPage> {
         query = query.eq('category', _categories[_selectedTab]);
       }
 
+      // Hanya ambil task yang completed_at nya hari ini atau belum selesai
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day).toIso8601String();
+      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+
+      query = query.or('completed_at.is.null,and(completed_at.gte.$startOfDay,completed_at.lte.$endOfDay)');
+      
       final response = await query.order('created_at', ascending: false);
 
       setState(() {
@@ -83,20 +90,52 @@ class _TaskPageState extends State<TaskPage> {
 
   Future<void> _toggleTaskStatus(Map<String, dynamic> task) async {
     try {
-      final newStatus = !(task['is_completed'] ?? false);
+      // Jika task sudah selesai, tidak bisa diubah lagi
+      if (task['is_completed'] == true) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tugas yang sudah selesai tidak dapat diubah kembali'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Cek apakah task memiliki subtask
+      if (task['subtasks'] != null && task['subtasks'].isNotEmpty) {
+        // Cek apakah semua subtask sudah selesai
+        final List<dynamic> subtasks = task['subtasks'];
+        bool allSubtasksCompleted = subtasks.every((subtask) => 
+          subtask is Map<String, dynamic> && subtask['is_completed'] == true
+        );
+
+        if (!allSubtasksCompleted) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Selesaikan semua tugas sampingan terlebih dahulu'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+      }
+
+      final newStatus = true; // Hanya bisa diubah menjadi selesai
       final now = DateTime.now().toIso8601String();
       
       // Debug print
       print('Toggling task: ${task['title']}');
       print('New status: $newStatus');
-      print('Completed at: ${newStatus ? now : null}');
+      print('Completed at: $now');
 
       // Update di Supabase
       await Supabase.instance.client
           .from('tasks')
           .update({
             'is_completed': newStatus,
-            'completed_at': newStatus ? now : null,
+            'completed_at': now,
           })
           .eq('id', task['id']);
       
@@ -106,9 +145,9 @@ class _TaskPageState extends State<TaskPage> {
       // Tampilkan snackbar sukses
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(newStatus ? 'Tugas selesai' : 'Tugas dibatalkan'),
-          backgroundColor: newStatus ? Colors.green : Colors.grey,
+        const SnackBar(
+          content: Text('Tugas selesai'),
+          backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
