@@ -383,6 +383,22 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                   const SizedBox(width: 15),
                   Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DetailAccountPage(),
+                          ),
+                        ).then((_) => _loadUserData());
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -404,19 +420,14 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DetailAccountPage(),
-                        ),
-                      ).then((_) => _loadUserData());
-                    },
-                    child: Icon(
+                            Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.grey[400],
                       size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

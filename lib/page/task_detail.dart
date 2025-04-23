@@ -705,6 +705,36 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       final time = await showTimePicker(
                         context: context,
                         initialTime: _reminderTime ?? TimeOfDay.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: Colors.white,
+                                hourMinuteColor: MaterialStateColor.resolveWith((states) =>
+                                    states.contains(MaterialState.selected) 
+                                        ? const Color(0xFF69D1F7)
+                                        : Colors.transparent),
+                                hourMinuteTextColor: MaterialStateColor.resolveWith((states) =>
+                                    states.contains(MaterialState.selected) 
+                                        ? Colors.white 
+                                        : Colors.black87),
+                                dayPeriodColor: MaterialStateColor.resolveWith((states) =>
+                                    states.contains(MaterialState.selected) 
+                                        ? const Color(0xFF69D1F7)
+                                        : Colors.transparent),
+                                dayPeriodTextColor: MaterialStateColor.resolveWith((states) =>
+                                    states.contains(MaterialState.selected) 
+                                        ? Colors.white 
+                                        : Colors.black87),
+                                dialHandColor: const Color(0xFF69D1F7),
+                                dialBackgroundColor: Colors.grey[50],
+                                dialTextColor: Colors.black87,
+                                entryModeIconColor: Colors.black87,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
                       if (time != null) {
                         setState(() => _reminderTime = time);
