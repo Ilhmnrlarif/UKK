@@ -274,8 +274,8 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
                                                   color: Colors.grey[600],
                                                   fontSize: 12,
                                                 ),
-                                              ),
                                             ),
+                                          ),
                                           if (task['reminder_time'] != null)
                                             Padding(
                                               padding: const EdgeInsets.only(top: 4),

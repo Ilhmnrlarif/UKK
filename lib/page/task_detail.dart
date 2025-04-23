@@ -369,27 +369,27 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     );
                   },
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.task['category'] ?? 'Tidak Ada Kategori',
-                          style: TextStyle(
-                            color: Colors.grey[800],
-                            fontSize: 12,
-                          ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.task['category'] ?? 'Tidak Ada Kategori',
+                        style: TextStyle(
+                          color: Colors.grey[800],
+                          fontSize: 12,
                         ),
-                        const Icon(
-                          Icons.arrow_drop_down,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
-                      ],
+                      ),
+                      const Icon(
+                        Icons.arrow_drop_down,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                    ],
                     ),
                   ),
                 ),
@@ -435,12 +435,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               _isEditingTitle = true;
                             });
                           },
-                          child: Text(
-                            widget.task['title'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
+                                child: Text(
+                                  widget.task['title'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                           ),
                         ),
                 ),
@@ -467,10 +467,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                               GestureDetector(
                                 onTap: () => _toggleSubtaskStatus(index),
                                 child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
                                     border: Border.all(
                                       color: subtask['is_completed'] == true
                                           ? Colors.green
@@ -540,23 +540,23 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                         ),
                                       )
                                     : GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _editingSubtasks[index] = true;
-                                          });
-                                        },
-                                        child: Text(
+                                          onTap: () {
+                                            setState(() {
+                                              _editingSubtasks[index] = true;
+                                            });
+                                          },
+                                          child: Text(
                                           subtask['text'],
                                           style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
+                                              fontSize: 14,
+                                              color: Colors.black87,
                                             decoration: subtask['is_completed'] == true
                                                 ? TextDecoration.lineThrough
                                                 : null,
+                                            ),
                                           ),
                                         ),
                                       ),
-                              ),
                               IconButton(
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
@@ -1047,7 +1047,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             .eq('id', widget.task['id'])
             .select()
             .single();
-            
+
         // Update parent widget
         widget.onTaskUpdated(updatedTask);
         

@@ -279,7 +279,7 @@ class _SideBarState extends State<SideBar> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
-            ),
+                  ),
           ),
           
           // Content
@@ -418,7 +418,7 @@ class _SideBarState extends State<SideBar> {
                   onTap: _createNewCategory,
                 ),
               ],
-            ),
+              ),
             ),
           ],
       ),

@@ -324,10 +324,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                   setState(() {
                                     _categories = newCategories;
                                     _selectedCategory = categoryController.text;
-                                  });
+                        });
 
                                   if (!mounted) return;
-                                  Navigator.pop(context);
+                        Navigator.pop(context);
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Error: $e')),
@@ -336,10 +336,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
                               }
                             },
                           ),
-                        ],
+                ],
                       );
                     },
-                  );
+            );
                 });
               },
             ),
@@ -618,11 +618,11 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       color: Colors.grey[600],
                               fontSize: 12,
                             ),
-                          ),
-                        ],
-                      ],
                     ),
-                  ),
+                        ],
+                  ],
+                ),
+              ),
                 ),
                 // Subtask button
                 GestureDetector(

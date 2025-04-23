@@ -79,59 +79,59 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
                 const SizedBox(height: 20),
-                Image.asset(
-                  'assets/images/amico.png',
+            Image.asset(
+              'assets/images/amico.png',
                   height: MediaQuery.of(context).size.height * 0.25,
                   fit: BoxFit.contain,
-                ),
+            ),
                 const SizedBox(height: 20),
-                TextField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF69D1F7)),
-                    hintText: 'Username',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF69D1F7)),
-                    ),
-                  ),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF69D1F7)),
+                hintText: 'Username',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF69D1F7)),
-                    hintText: 'Email',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF69D1F7)),
-                    ),
-                  ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF69D1F7)),
                 ),
+              ),
+            ),
                 const SizedBox(height: 15),
-                TextField(
-                  controller: _passwordController,
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF69D1F7)),
+                hintText: 'Email',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF69D1F7)),
+                ),
+              ),
+            ),
+                const SizedBox(height: 15),
+            TextField(
+              controller: _passwordController,
                   obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
-                    hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF69D1F7)),
-                    ),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
+                hintText: 'Password',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF69D1F7)),
+                ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -143,22 +143,22 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
-                  ),
-                ),
+              ),
+            ),
                 const SizedBox(height: 15),
-                TextField(
-                  controller: _confirmPasswordController,
+            TextField(
+              controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
-                    hintText: 'Confirm Password',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF69D1F7)),
-                    ),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF69D1F7)),
+                hintText: 'Confirm Password',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF69D1F7)),
+                ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
@@ -170,34 +170,34 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signUp,
-                    style: ElevatedButton.styleFrom(
+              ),
+            ),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _signUp,
+                style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF69D1F7),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Register',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
                 ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
                 const SizedBox(height: 20),
-              ],
+          ],
             ),
           ),
         ),

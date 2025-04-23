@@ -73,7 +73,7 @@ class _TaskPageState extends State<TaskPage> {
       final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
 
       query = query.or('completed_at.is.null,and(completed_at.gte.$startOfDay,completed_at.lte.$endOfDay)');
-      
+
       final response = await query.order('created_at', ascending: false);
 
       setState(() {
@@ -412,13 +412,13 @@ class _TaskPageState extends State<TaskPage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: _categories.asMap().entries.map((entry) {
-                  return Row(
-                    children: [
-                      _buildTab(entry.value, entry.key),
-                      const SizedBox(width: 10),
-                    ],
-                  );
-                }).toList(),
+                    return Row(
+                      children: [
+                        _buildTab(entry.value, entry.key),
+                        const SizedBox(width: 10),
+                      ],
+                    );
+                  }).toList(),
               ),
             ),
           ),
@@ -762,9 +762,9 @@ class _TaskPageState extends State<TaskPage> {
                       size: 20,
                       color: getPriorityColor(task['priority']),
                     ),
-                  ),
                 ),
               ),
+            ),
             if (task['due_date'] != null)
               Text(
                 task['due_date'].toString().split('T')[0],

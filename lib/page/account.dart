@@ -279,28 +279,19 @@ class _AccountPageState extends State<AccountPage> {
             yValueMapper: (ChartData data, _) => data.y,
             pointColorMapper: (ChartData data, _) => data.color,
             innerRadius: '60%',
-            dataLabelSettings: DataLabelSettings(
+            dataLabelSettings: const DataLabelSettings(
               isVisible: true,
               labelPosition: ChartDataLabelPosition.outside,
-              connectorLineSettings: const ConnectorLineSettings(
+              connectorLineSettings: ConnectorLineSettings(
                 type: ConnectorType.curve,
                 length: '25%',
               ),
-              textStyle: const TextStyle(
+              textStyle: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
-              builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
-                return Text(
-                  '${data.x}\n${data.y.toInt()} tugas',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                );
-              },
             ),
+            dataLabelMapper: (ChartData data, _) => '${data.x}\n${data.y.toInt()} tugas',
           ),
         ],
       ),

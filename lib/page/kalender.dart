@@ -53,7 +53,7 @@ class _KalenderPageState extends State<KalenderPage> {
           .from('tasks')
           .select()
           .eq('user_id', Supabase.instance.client.auth.currentUser!.id);
-      
+
       debugPrint('Tasks response: $tasksResponse');
       Map<DateTime, List<dynamic>> events = {};
       
@@ -85,13 +85,13 @@ class _KalenderPageState extends State<KalenderPage> {
 
       debugPrint('Final events map: $events');
       if (mounted) {
-        setState(() {
-          _events = events;
+      setState(() {
+        _events = events;
           if (_selectedDay != null) {
             _selectedEvents = _getEventsForDay(_selectedDay!);
             debugPrint('Selected events: $_selectedEvents');
           }
-        });
+      });
       }
     } catch (e, stackTrace) {
       debugPrint('Error loading tasks: $e');
@@ -168,8 +168,8 @@ class _KalenderPageState extends State<KalenderPage> {
                 _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
               });
             },
-          ),
-          IconButton(
+            ),
+            IconButton(
             padding: const EdgeInsets.only(right: 8),
             icon: Icon(
               _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -181,8 +181,8 @@ class _KalenderPageState extends State<KalenderPage> {
                 _calendarFormat = _isExpanded ? CalendarFormat.month : CalendarFormat.week;
               });
             },
-          ),
-        ],
+            ),
+          ],
         title: Text(
           DateFormat('MMMM yyyy', 'id_ID').format(_focusedDay).toUpperCase(),
           style: const TextStyle(
@@ -224,7 +224,7 @@ class _KalenderPageState extends State<KalenderPage> {
             },
             onPageChanged: (focusedDay) {
               setState(() {
-                _focusedDay = focusedDay;
+              _focusedDay = focusedDay;
               });
             },
             calendarStyle: CalendarStyle(
@@ -330,8 +330,8 @@ class _KalenderPageState extends State<KalenderPage> {
                         color: event['displayColor'] as Color? ?? Colors.blue.shade300,
                       ),
                     ),
-                    title: Text(event['title'] ?? ''),
-                    subtitle: Text(event['category'] ?? ''),
+                  title: Text(event['title'] ?? ''),
+                  subtitle: Text(event['category'] ?? ''),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
