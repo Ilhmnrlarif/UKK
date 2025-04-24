@@ -17,7 +17,7 @@ class TaskPage extends StatefulWidget {
 class _TaskPageState extends State<TaskPage> {
   int _selectedTab = 0;
   List<Map<String, dynamic>> _tasks = [];
-  List<String> _categories = ['Semua']; // Inisialisasi dengan 'Semua'
+  List<String> _categories = ['Semua']; 
   bool _isLoading = true;
   bool _isSelectionMode = false;
   Set<String> _selectedTasks = {};
@@ -30,7 +30,7 @@ class _TaskPageState extends State<TaskPage> {
   @override
   void initState() {
     super.initState();
-    _loadCategories(); // Tambahkan ini
+    _loadCategories();
     _loadTasks();
   }
 
@@ -44,9 +44,7 @@ class _TaskPageState extends State<TaskPage> {
 
       if (response != null && response['category'] != null) {
         setState(() {
-          // Reset categories terlebih dahulu
           _categories = ['Semua'];
-          // Tambahkan kategori baru dari database
           _categories.addAll(List<String>.from(response['category']));
         });
       }
@@ -62,12 +60,9 @@ class _TaskPageState extends State<TaskPage> {
           .select()
           .eq('user_id', Supabase.instance.client.auth.currentUser!.id);
 
-      // Filter berdasarkan kategori yang dipilih
-      if (_selectedTab != 0) { // Jika bukan "Semua"
+      if (_selectedTab != 0) {
         query = query.eq('category', _categories[_selectedTab]);
       }
-
-      // Hanya ambil task yang completed_at nya hari ini atau belum selesai
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day).toIso8601String();
       final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
@@ -90,7 +85,6 @@ class _TaskPageState extends State<TaskPage> {
 
   Future<void> _toggleTaskStatus(Map<String, dynamic> task) async {
     try {
-      // Jika task sudah selesai, tidak bisa diubah lagi
       if (task['is_completed'] == true) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,9 +96,7 @@ class _TaskPageState extends State<TaskPage> {
         return;
       }
 
-      // Cek apakah task memiliki subtask
       if (task['subtasks'] != null && task['subtasks'].isNotEmpty) {
-        // Cek apakah semua subtask sudah selesai
         final List<dynamic> subtasks = task['subtasks'];
         bool allSubtasksCompleted = subtasks.every((subtask) => 
           subtask is Map<String, dynamic> && subtask['is_completed'] == true
@@ -122,15 +114,12 @@ class _TaskPageState extends State<TaskPage> {
         }
       }
 
-      final newStatus = true; // Hanya bisa diubah menjadi selesai
+      final newStatus = true;
       final now = DateTime.now().toIso8601String();
-      
-      // Debug print
       print('Toggling task: ${task['title']}');
       print('New status: $newStatus');
       print('Completed at: $now');
 
-      // Update di Supabase
       await Supabase.instance.client
           .from('tasks')
           .update({
@@ -138,11 +127,8 @@ class _TaskPageState extends State<TaskPage> {
             'completed_at': now,
           })
           .eq('id', task['id']);
-      
-      // Reload tasks untuk memperbarui tampilan
       _loadTasks();
 
-      // Tampilkan snackbar sukses
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -167,12 +153,9 @@ class _TaskPageState extends State<TaskPage> {
       setState(() => _isLoading = true);
       
       final now = DateTime.now().toIso8601String();
-      
-      // Debug print
       print('Completing ${_selectedTasks.length} tasks');
       print('Completion time: $now');
 
-      // Update status task yang dipilih menjadi selesai
       for (String taskId in _selectedTasks) {
         print('Completing task ID: $taskId');
         await Supabase.instance.client
@@ -184,13 +167,11 @@ class _TaskPageState extends State<TaskPage> {
             .eq('id', taskId);
       }
 
-      // Reset mode seleksi
       setState(() {
         _isSelectionMode = false;
         _selectedTasks.clear();
       });
 
-      // Reload tasks
       _loadTasks();
 
       if (!mounted) return;
@@ -227,7 +208,6 @@ class _TaskPageState extends State<TaskPage> {
     try {
       setState(() => _isLoading = true);
       
-      // Update di Supabase
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
@@ -237,7 +217,6 @@ class _TaskPageState extends State<TaskPage> {
           .select()
           .single();
 
-      // Update state lokal
       setState(() {
         final index = _tasks.indexWhere((task) => task['id'] == taskId);
         if (index != -1) {
@@ -271,8 +250,8 @@ class _TaskPageState extends State<TaskPage> {
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(
-        buttonPosition.dx - 10, // Sedikit ke kiri dari ikon
-        buttonPosition.dy - size.height, // Sejajar dengan task
+        buttonPosition.dx - 10,
+        buttonPosition.dy - size.height,
         buttonPosition.dx + size.width,
         buttonPosition.dy,
       ),
@@ -328,7 +307,6 @@ class _TaskPageState extends State<TaskPage> {
       backgroundColor: Colors.white,
       drawer: SideBar(
         onTaskSelected: (taskId) {
-          // Cari task berdasarkan ID
           final selectedTask = _tasks.firstWhere(
             (task) => task['id'] == taskId,
             orElse: () => {},
@@ -405,7 +383,6 @@ class _TaskPageState extends State<TaskPage> {
       ),
       body: Column(
         children: [
-          // Tab Bar Menu dengan kategori dinamis
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SingleChildScrollView(
@@ -423,7 +400,6 @@ class _TaskPageState extends State<TaskPage> {
             ),
           ),
           const SizedBox(height: 20),
-          // Task List
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -448,7 +424,6 @@ class _TaskPageState extends State<TaskPage> {
                     : ListView(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         children: [
-                          // Tugas Hari Ini (Belum Selesai)
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -483,7 +458,6 @@ class _TaskPageState extends State<TaskPage> {
                             ).toList(),
                           ],
 
-                          // Selesai Hari Ini
                           if (_tasks.any((task) => task['is_completed'])) ...[
                             const SizedBox(height: 24),
                             InkWell(
@@ -528,7 +502,6 @@ class _TaskPageState extends State<TaskPage> {
                                       builder: (context) => const HistoryTaskPage(),
                                     ),
                                   );
-                                  // Refresh task list jika ada perubahan di history
                                   if (result == true) {
                                     _loadTasks();
                                   }
@@ -570,7 +543,6 @@ class _TaskPageState extends State<TaskPage> {
               ),
             );
             
-            // Reload tasks jika ada task baru ditambahkan
             if (result == true) {
               _loadTasks();
             }
@@ -595,7 +567,7 @@ class _TaskPageState extends State<TaskPage> {
         setState(() {
           _selectedTab = index;
         });
-        _loadTasks(); // Reload tasks ketika tab berubah
+        _loadTasks();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -615,7 +587,6 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildTaskItem(Map<String, dynamic> task) {
-    // Fungsi untuk mendapatkan warna prioritas
     Color getPriorityColor(String? priority) {
       switch (priority) {
         case 'High':
@@ -736,7 +707,6 @@ class _TaskPageState extends State<TaskPage> {
                 ),
               ),
             ),
-            // Indikator subtask
             if (task['subtasks'] != null && (task['subtasks'] as List).isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -746,7 +716,6 @@ class _TaskPageState extends State<TaskPage> {
                   color: Colors.blue[300],
                 ),
               ),
-            // Indikator prioritas yang bisa diklik
             if (!_isSelectionMode)
               Builder(
                 builder: (context) => GestureDetector(

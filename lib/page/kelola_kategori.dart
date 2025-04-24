@@ -3,12 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CategoryColor {
   static const List<Color> colors = [
-    Color(0xFFFF5733), // Merah-Oranye
-    Color(0xFFFFB733), // Kuning
-    Color(0xFF8BC34A), // Hijau
-    Color(0xFF009688), // Teal
-    Color(0xFF2196F3), // Biru
-    Color(0xFF9C27B0), // Ungu
+    Color(0xFFFF5733), 
+    Color(0xFFFFB733),
+    Color(0xFF8BC34A), 
+    Color(0xFF009688), 
+    Color(0xFF2196F3), 
+    Color(0xFF9C27B0), 
   ];
 }
 
@@ -24,7 +24,7 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
   Map<String, int> _taskCounts = {};
   bool _isLoading = true;
   final TextEditingController _categoryController = TextEditingController();
-  Color _selectedColor = CategoryColor.colors[4]; // Default blue color
+  Color _selectedColor = CategoryColor.colors[4];
 
   @override
   void initState() {
@@ -94,7 +94,6 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
       final userId = Supabase.instance.client.auth.currentUser!.id;
       List<String> categoryNames = categories.map((cat) => cat['name'] as String).toList();
       
-      // Membuat map warna kategori
       Map<String, int> categoryColors = {};
       for (var category in categories) {
         categoryColors[category['name']] = category['color'] ?? CategoryColor.colors[4].value;
@@ -112,7 +111,6 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
         const SnackBar(content: Text('Kategori berhasil diperbarui')),
       );
       
-      // Memperbarui tampilan kalender
       await _updateCalendarColors(categoryColors);
       
     } catch (e) {
@@ -126,7 +124,6 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
     try {
       final userId = Supabase.instance.client.auth.currentUser!.id;
       
-      // Update warna untuk semua tugas yang sesuai dengan kategori
       for (var entry in categoryColors.entries) {
         await Supabase.instance.client
             .from('tasks')
@@ -236,7 +233,6 @@ class _KelolaKategoriPageState extends State<KelolaKategoriPage> {
                           ),
                         ),
                       )),
-                      // Custom color picker (disabled for now)
                       Container(
                         width: 36,
                         height: 36,

@@ -21,7 +21,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
 
   Future<void> _loadCompletedTasks() async {
     try {
-      // Ambil semua tugas yang selesai tanpa memfilter kategori
       final response = await Supabase.instance.client
           .from('tasks')
           .select()
@@ -32,7 +31,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
 
       final tasks = List<Map<String, dynamic>>.from(response);
       
-      // Mengelompokkan task berdasarkan tanggal penyelesaian
       final grouped = <String, List<Map<String, dynamic>>>{};
       for (var task in tasks) {
         if (task['completed_at'] == null) continue;
@@ -51,8 +49,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
         _groupedTasks = grouped;
         _isLoading = false;
       });
-
-      // Debug print untuk memeriksa data
       print('Total completed tasks: ${tasks.length}');
       print('Grouped dates: ${grouped.keys.toList()}');
       for (var date in grouped.keys) {
@@ -66,7 +62,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
 
   Future<void> _deleteAllCompletedTasks() async {
     try {
-      // Tampilkan dialog konfirmasi
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -97,15 +92,12 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
 
       if (confirm == true) {
         setState(() => _isLoading = true);
-
-        // Hapus semua tugas yang selesai
         await Supabase.instance.client
             .from('tasks')
             .delete()
             .eq('user_id', Supabase.instance.client.auth.currentUser!.id)
             .eq('is_completed', true);
 
-        // Refresh data
         await _loadCompletedTasks();
 
         if (!mounted) return;
@@ -117,7 +109,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
           ),
         );
 
-        // Kembali ke halaman sebelumnya dengan nilai true
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -187,7 +178,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tanggal
                         Row(
                           children: [
                             Container(
@@ -209,7 +199,6 @@ class _HistoryTaskPageState extends State<HistoryTaskPage> {
                             ),
                           ],
                         ),
-                        // Task list untuk tanggal tersebut
                         Container(
                           margin: const EdgeInsets.only(left: 5),
                           padding: const EdgeInsets.only(left: 20),

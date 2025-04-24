@@ -18,21 +18,16 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuth() async {
-    // Delay selama 2 detik untuk menampilkan splash screen
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
-
-    // Cek status login
     final Session? session = Supabase.instance.client.auth.currentSession;
 
     if (session != null) {
-      // User sudah login, navigasi ke BottomNav
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const BottomNav()),
       );
     } else {
-      // User belum login, navigasi ke LoginPage
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginPage()),
       );
@@ -47,13 +42,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo atau gambar splash screen
             Image.asset(
               'assets/images/amico.png',
               height: 200,
             ),
             const SizedBox(height: 24),
-            // Loading indicator
             const CircularProgressIndicator(
               color: Color(0xFF69D1F7),
             ),

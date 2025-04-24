@@ -266,7 +266,6 @@ class _SideBarState extends State<SideBar> {
       backgroundColor: Colors.white,
         child: Column(
           children: [
-          // Header
             Container(
               width: double.infinity,
               height: 120,
@@ -281,13 +280,11 @@ class _SideBarState extends State<SideBar> {
                     ),
                   ),
           ),
-          
-          // Content
+
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                // Kategori Section
                 Theme(
                   data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
@@ -344,8 +341,6 @@ class _SideBarState extends State<SideBar> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(height: 1),
                 ),
-            
-                // Tasks Section
             if (_tasks.isNotEmpty) ...[
               Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -398,8 +393,6 @@ class _SideBarState extends State<SideBar> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Divider(height: 1),
                 ),
-
-                // Add New Category Button
                 ListTile(
                   leading: const Icon(
                       Icons.add,

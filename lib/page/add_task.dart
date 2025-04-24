@@ -25,7 +25,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
   List<String> _subtasks = [];
   bool _showSubtaskInput = false;
 
-  // Definisi prioritas dan warnanya
+
   final Map<String, Color> priorities = {
     'High': Colors.red,
     'Medium': Colors.orange,
@@ -77,13 +77,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
     try {
       String? attachmentUrl;
-      
-      // Upload attachment jika ada
       if (_attachment != null) {
         final fileExt = _attachment!.path.split('.').last;
         final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-        
-        // Baca file sebagai bytes
         final bytes = await _attachment!.readAsBytes();
         
         final response = await Supabase.instance.client.storage
@@ -100,8 +96,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
           .from('task_attachments')
           .getPublicUrl(fileName);
       }
-
-      // Create task
       await Supabase.instance.client.from('tasks').insert({
         'user_id': Supabase.instance.client.auth.currentUser!.id,
         'title': _taskController.text,
@@ -115,10 +109,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
         'created_at': DateTime.now().toIso8601String(),
         'subtasks': _subtasks.isNotEmpty ? _subtasks : null,
       });
-
-      // ignore: use_build_context_synchronously
       Navigator.pop(context, true);
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tugas berhasil ditambahkan')),
       );
@@ -178,7 +169,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
       context: context,
       initialDate: _dueDate ?? now,
       firstDate: now,
-      lastDate: DateTime(now.year + 5), // 5 tahun dari sekarang
+      lastDate: DateTime(now.year + 5),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -268,7 +259,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 ],
               ),
               onTap: () {
-                // Delay untuk menghindari konflik dengan penutupan menu
                 Future.delayed(const Duration(milliseconds: 10), () {
                   showDialog(
                     context: context,
@@ -413,7 +403,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
             ],
           ),
           const SizedBox(height: 20),
-          // Input field dan button dalam satu row
           Row(
             children: [
               Expanded(
@@ -561,7 +550,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
               runSpacing: 10,
             children: [
               _buildCategoryButton(),
-              // Tanggal
               GestureDetector(
                 onTap: _pickDate,
                 child: Container(
@@ -624,7 +612,6 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 ),
               ),
                 ),
-                // Subtask button
                 GestureDetector(
                   onTap: () {
                     setState(() {

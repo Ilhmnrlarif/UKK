@@ -241,7 +241,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: () async {
-              // Tampilkan dialog konfirmasi
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -273,8 +272,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               if (confirm == true) {
                 try {
                   setState(() => _isLoading = true);
-                  
-                  // Hapus lampiran jika ada
                   if (_attachmentUrls.isNotEmpty) {
                     for (String url in _attachmentUrls) {
                       final fileName = url.split('/').last;
@@ -284,23 +281,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     }
                   }
 
-                  // Hapus task dari database
                   await Supabase.instance.client
                       .from('tasks')
                       .delete()
                       .eq('id', widget.task['id']);
 
                   if (!mounted) return;
-                  
-                  // Tampilkan notifikasi sukses
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Tugas berhasil dihapus'),
                       backgroundColor: Colors.green,
                     ),
                   );
-
-                  // Kembali ke halaman sebelumnya
                   Navigator.pop(context, true);
                 } catch (e) {
                   if (!mounted) return;
@@ -325,13 +317,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian atas (Kategori, Judul, dan Tambah tugas)
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kategori dropdown
                 GestureDetector(
                   onTap: () {
                     showDialog(
@@ -393,8 +383,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     ),
                   ),
                 ),
-                
-                // Judul task
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 8),
                   child: _isEditingTitle
@@ -444,12 +432,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ),
                         ),
                 ),
-                
-                // Tambah tugas sampingan
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Daftar subtasks yang sudah ada
                     if (_subtasks.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       ..._subtasks.asMap().entries.map((entry) {
@@ -573,7 +558,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       }).toList(),
                     ],
 
-                    // TextField untuk menambah subtask baru (hanya muncul jika _showSubtaskInput true)
                     if (_showSubtaskInput)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -623,9 +607,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           ],
                         ),
                       ),
-
-                    // Tombol tambah tugas sampingan
-                    InkWell(
+                                          InkWell(
                       onTap: () {
                         setState(() {
                           _showSubtaskInput = true;
@@ -655,10 +637,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             ),
           ),
 
-          // Divider sebelum detail task
           const Divider(height: 1),
 
-          // Detail task dalam bentuk list
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -839,7 +819,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       itemBuilder: (context, index) {
                         return Stack(
                           children: [
-                            // Container gambar
                             Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
@@ -849,13 +828,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 ),
                               ),
                             ),
-                            // Tombol hapus
                             Positioned(
                               top: 4,
                               right: 4,
                               child: GestureDetector(
                                 onTap: () async {
-                                  // Konfirmasi penghapusan
                                   final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (context) => AlertDialog(
@@ -1027,8 +1004,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         final bytes = await image.readAsBytes();
         final fileExt = image.path.split('.').last.toLowerCase();
         final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-        
-        // Tentukan content type yang benar
         String contentType;
         switch (fileExt) {
           case 'jpg':
@@ -1047,8 +1022,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           default:
             contentType = 'image/jpeg';
         }
-
-        // Upload file ke storage
         await Supabase.instance.client.storage
             .from('task_attachments')
             .uploadBinary(
@@ -1059,26 +1032,20 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 upsert: true,
               ),
             );
-
-        // Dapatkan URL publik
         final String publicUrl = Supabase.instance.client.storage
             .from('task_attachments')
             .getPublicUrl(fileName);
 
-        // Update state terlebih dahulu untuk tampilan langsung
         setState(() {
           _attachmentUrls = [..._attachmentUrls, publicUrl];
         });
 
-        // Update task dengan URL attachment
         final updatedTask = await Supabase.instance.client
             .from('tasks')
             .update({'attachment_url': _attachmentUrls})
             .eq('id', widget.task['id'])
             .select()
             .single();
-
-        // Update parent widget
         widget.onTaskUpdated(updatedTask);
         
         if (!mounted) return;
@@ -1135,14 +1102,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     
     try {
       setState(() => _isLoading = true);
-      
-      // Update state terlebih dahulu untuk tampilan langsung
       setState(() {
         widget.task['title'] = _taskTitleController.text;
         _isEditingTitle = false;
       });
 
-      // Update task di database
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
@@ -1162,7 +1126,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       );
     } catch (e) {
-      // Jika terjadi error, kembalikan judul ke nilai sebelumnya
       setState(() {
         widget.task['title'] = widget.task['title'];
         _taskTitleController.text = widget.task['title'];
@@ -1225,22 +1188,17 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   Future<void> _deleteImage(int index) async {
     try {
       setState(() => _isLoading = true);
-      
-      // Ambil URL gambar yang akan dihapus
       final String urlToDelete = _attachmentUrls[index];
-      
-      // Hapus dari storage
       final fileName = urlToDelete.split('/').last;
       await Supabase.instance.client.storage
           .from('task_attachments')
           .remove([fileName]);
-
-      // Update list URL di state dan database
+          
       setState(() {
         _attachmentUrls.removeAt(index);
       });
 
-      // Update task dengan URL yang tersisa
+
       await Supabase.instance.client
           .from('tasks')
           .update({
@@ -1272,13 +1230,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   Future<void> _toggleSubtaskStatus(int index) async {
     try {
       setState(() => _isLoading = true);
-      
-      // Update status subtask
       setState(() {
         _subtasks[index]['is_completed'] = !(_subtasks[index]['is_completed'] ?? false);
       });
-
-      // Update task di database
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
@@ -1302,7 +1256,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         ),
       );
     } catch (e) {
-      // Kembalikan status jika gagal
       setState(() {
         _subtasks[index]['is_completed'] = !(_subtasks[index]['is_completed'] ?? false);
       });
@@ -1325,7 +1278,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   }
 
   Future<void> _updateTaskStatus(bool newStatus) async {
-    // Jika task sudah selesai, tidak bisa diubah kembali
     if (widget.task['is_completed'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1336,7 +1288,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       return;
     }
 
-    // Cek apakah semua subtask sudah selesai
     if (newStatus && !_areAllSubtasksCompleted()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1355,7 +1306,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
-            'is_completed': true, // Selalu set ke true karena hanya bisa menyelesaikan
+            'is_completed': true,
             'completed_at': now,
           })
           .eq('id', widget.task['id'])

@@ -31,7 +31,6 @@ class _KalenderPageState extends State<KalenderPage> {
     try {
       debugPrint('Loading tasks...');
       
-      // Ambil data kategori warna terlebih dahulu
       final profileResponse = await Supabase.instance.client
           .from('profiles')
           .select('category_colors')
@@ -48,7 +47,7 @@ class _KalenderPageState extends State<KalenderPage> {
         debugPrint('Category colors loaded: $categoryColors');
       }
 
-      // Ambil semua tugas
+
       final tasksResponse = await Supabase.instance.client
           .from('tasks')
           .select()
@@ -64,7 +63,7 @@ class _KalenderPageState extends State<KalenderPage> {
           final key = DateTime(date.year, date.month, date.day);
           debugPrint('Task date: $date, key: $key');
           
-          // Ambil warna dari categoryColors
+         
           Color taskColor = Colors.blue.shade300;
           if (task['category'] != null && categoryColors.containsKey(task['category'])) {
             taskColor = Color(categoryColors[task['category']]!);
@@ -121,12 +120,12 @@ class _KalenderPageState extends State<KalenderPage> {
 
   void _onTaskUpdated(Map<String, dynamic> updatedTask) {
     setState(() {
-      // Update events map
+
       if (updatedTask['due_date'] != null) {
         final date = DateTime.parse(updatedTask['due_date']).toLocal();
         final key = DateTime(date.year, date.month, date.day);
         
-        // Update the task in events
+  
         if (_events.containsKey(key)) {
           final index = _events[key]!.indexWhere((task) => task['id'] == updatedTask['id']);
           if (index != -1) {
@@ -134,7 +133,7 @@ class _KalenderPageState extends State<KalenderPage> {
           }
         }
         
-        // Update selected events if the updated task is for the selected day
+
         if (_selectedDay != null && isSameDay(key, _selectedDay!)) {
           _selectedEvents = _getEventsForDay(_selectedDay!);
         }
@@ -335,7 +334,6 @@ class _KalenderPageState extends State<KalenderPage> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Indikator subtask
                         if (event['subtasks'] != null && 
                             (event['subtasks'] as List).isNotEmpty)
                           Padding(
@@ -346,7 +344,6 @@ class _KalenderPageState extends State<KalenderPage> {
                               color: Colors.blue[300],
                             ),
                           ),
-                        // Indikator priority
                         if (event['priority'] != null)
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
@@ -368,7 +365,6 @@ class _KalenderPageState extends State<KalenderPage> {
                           ),
                         ),
                       ).then((_) {
-                        // Reload tasks setelah kembali dari detail
                         _loadTasks();
                       });
                     },
@@ -394,8 +390,6 @@ class _KalenderPageState extends State<KalenderPage> {
                 child: const AddTaskPage(),
               ),
             );
-            
-            // Reload tasks jika ada task baru ditambahkan
             if (result == true) {
               _loadTasks();
             }

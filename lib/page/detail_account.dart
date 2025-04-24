@@ -52,16 +52,11 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
       if (userId == null) return;
 
       if (avatarUrl != null) {
-        // Ekstrak nama file dari URL
         final fileName = avatarUrl!.split('/').last;
-        
-        // Hapus file dari storage
         await Supabase.instance.client
             .storage
             .from('avatars')
             .remove([fileName]);
-
-        // Update profile dengan menghapus avatar_url
         await Supabase.instance.client
             .from('profiles')
             .update({'avatar_url': null})
@@ -105,7 +100,6 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
           'email': _emailController.text,
         }).eq('id', userId);
 
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profil berhasil diperbarui')),
         );
@@ -124,7 +118,6 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
   Future<void> _logout() async {
     try {
       await Supabase.instance.client.auth.signOut();
-      // ignore: use_build_context_synchronously
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginPage()),
         (route) => false,
@@ -148,20 +141,11 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
       if (image == null) return;
 
       setState(() => _isLoading = true);
-
-      // Debug: Print file path dan extension
       print('File path: ${image.path}');
-
-      // Baca file sebagai bytes
       final bytes = await image.readAsBytes();
-      
-      // Generate nama file yang unik dengan ekstensi .jpg
       final String userId = Supabase.instance.client.auth.currentUser!.id;
       final String fileName = 'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
       print('Uploading file: $fileName');
-
-      // Upload ke bucket avatars
       final String path = await Supabase.instance.client
           .storage
           .from('avatars')
@@ -175,16 +159,12 @@ class _DetailAccountPageState extends State<DetailAccountPage> {
           );
 
       print('File berhasil diupload ke: $path');
-
-      // Dapatkan public URL
       final String publicUrl = Supabase.instance.client
           .storage
           .from('avatars')
           .getPublicUrl(fileName);
 
       print('Public URL: $publicUrl');
-
-      // Update profile dengan URL avatar baru
       await Supabase.instance.client
           .from('profiles')
           .update({

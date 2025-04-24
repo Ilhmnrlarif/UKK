@@ -60,7 +60,6 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
-        // Mengambil semua tugas
         final response = await Supabase.instance.client
             .from('tasks')
             .select()
@@ -80,18 +79,16 @@ class _AccountPageState extends State<AccountPage> {
         setState(() {
           _completedTasks = completed;
           _pendingTasks = pending;
-
-          // Update chart data
           _chartData = [
             ChartData(
               'Selesai',
               completed.toDouble(),
-              const Color(0xFF4CAF50), // Hijau untuk tugas selesai
+              const Color(0xFF4CAF50), 
             ),
             ChartData(
               'Belum Selesai',
               pending.toDouble(),
-              const Color(0xFFF44336), // Merah untuk tugas tertunda
+              const Color(0xFFF44336),
             ),
           ];
         });
@@ -114,21 +111,17 @@ class _AccountPageState extends State<AccountPage> {
 
       setState(() => _isLoading = true);
 
-      // Debug: Print file path dan extension
       print('File path: ${image.path}');
       final String originalFileExt = image.path.split('.').last.toLowerCase();
       print('Original file extension: $originalFileExt');
 
-      // Baca file sebagai bytes
       final bytes = await image.readAsBytes();
-      
-      // Generate nama file yang unik dengan ekstensi .jpg
+
       final String userId = Supabase.instance.client.auth.currentUser!.id;
       final String fileName = 'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       print('Uploading file: $fileName');
 
-      // Upload ke bucket avatars
       final String path = await Supabase.instance.client
           .storage
           .from('avatars')
@@ -143,7 +136,7 @@ class _AccountPageState extends State<AccountPage> {
 
       print('File berhasil diupload ke: $path');
 
-      // Dapatkan public URL
+
       final String publicUrl = Supabase.instance.client
           .storage
           .from('avatars')
@@ -151,7 +144,6 @@ class _AccountPageState extends State<AccountPage> {
 
       print('Public URL: $publicUrl');
 
-      // Update profile dengan URL avatar baru
       await Supabase.instance.client
           .from('profiles')
           .update({
@@ -352,7 +344,6 @@ class _AccountPageState extends State<AccountPage> {
         child: Column(
           children: [
             const SizedBox(height: 60),
-            // Profile Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -434,7 +425,6 @@ class _AccountPageState extends State<AccountPage> {
               ),
             ),
             const SizedBox(height: 30),
-            // Task Summary
             Container(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -513,7 +503,6 @@ class _AccountPageState extends State<AccountPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Daily Task Completion Chart
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
