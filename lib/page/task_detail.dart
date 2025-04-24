@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../services/notification_service.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Map<String, dynamic> task;
@@ -42,6 +43,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     _loadTaskDetails();
     _loadCategories();
     _taskTitleController.text = widget.task['title'] ?? '';
+    _requestNotificationPermissions();
   }
 
   void _loadTaskDetails() {
@@ -955,19 +957,33 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   Future<void> _updateTask() async {
     setState(() => _isLoading = true);
     try {
+      DateTime? reminderDateTime;
+      if (_reminderTime != null && _dueDate != null) {
+        reminderDateTime = DateTime(
+          _dueDate!.year,
+          _dueDate!.month,
+          _dueDate!.day,
+          _reminderTime!.hour,
+          _reminderTime!.minute,
+        );
+      }
+
+      // Simpan waktu pengingat sebelumnya jika ada
+      final previousTask = await Supabase.instance.client
+          .from('tasks')
+          .select('reminder_time')
+          .eq('id', widget.task['id'])
+          .single();
+      
+      final DateTime? previousReminderTime = previousTask['reminder_time'] != null 
+          ? DateTime.parse(previousTask['reminder_time']) 
+          : null;
+
       final updatedTask = await Supabase.instance.client
           .from('tasks')
           .update({
             'due_date': _dueDate?.toIso8601String(),
-            'reminder_time': _reminderTime != null 
-                ? DateTime(
-                    _dueDate?.year ?? DateTime.now().year,
-                    _dueDate?.month ?? DateTime.now().month,
-                    _dueDate?.day ?? DateTime.now().day,
-                    _reminderTime!.hour,
-                    _reminderTime!.minute,
-                  ).toIso8601String()
-                : null,
+            'reminder_time': reminderDateTime?.toIso8601String() ?? previousTask['reminder_time'],
             'reminder_before': _reminderBefore != null
                 ? DateTime(
                     _dueDate?.year ?? DateTime.now().year,
@@ -984,13 +1000,54 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           .select()
           .single();
 
+      // Atur notifikasi berdasarkan waktu yang tersedia
+      final DateTime notificationTime = reminderDateTime ?? previousReminderTime ?? DateTime.now();
+      
+      if (reminderDateTime != null || previousReminderTime != null) {
+        try {
+          await NotificationService().scheduleTaskNotification(
+            taskId: widget.task['id'],
+            title: widget.task['title'],
+            body: 'Waktunya mengerjakan tugas Anda',
+            scheduledDate: notificationTime,
+            category: widget.task['category'],
+            notes: _notesController.text,
+          );
+          
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pengingat berhasil diatur'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } catch (e) {
+          print('Error setting notification: $e');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal mengatur pengingat: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+
       widget.onTaskUpdated(updatedTask);
+
     } catch (e) {
+      print('Error updating task: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text('Gagal memperbarui tugas: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -1333,6 +1390,23 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       );
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    try {
+      final bool granted = await NotificationService().requestPermissions();
+      if (!granted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin notifikasi diperlukan untuk pengingat tugas'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error requesting notification permissions: $e');
     }
   }
 

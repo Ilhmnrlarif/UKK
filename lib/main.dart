@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:to_do_list/config/supabase_config.dart';
 import 'package:intl/intl.dart';
 import 'package:to_do_list/page/splash_page.dart';
+import 'package:to_do_list/services/notification_service.dart';
+import 'package:to_do_list/services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +17,9 @@ void main() async {
   );
 
   await initializeDateFormatting('id_ID', null);
+  
+  // Inisialisasi layanan notifikasi
+  await NotificationService().initialize();
 
   runApp(const MyApp());
 }
@@ -25,6 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: NavigationService.navigatorKey,
       title: 'To Do List',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

@@ -1,0 +1,53 @@
+-- Enable RLS
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- Policy untuk tasks
+CREATE POLICY "Users can view their own tasks"
+    ON tasks FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own tasks"
+    ON tasks FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own tasks"
+    ON tasks FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own tasks"
+    ON tasks FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- Policy untuk notifications
+CREATE POLICY "Users can view notifications for their tasks"
+    ON notifications FOR SELECT
+    USING (EXISTS (
+        SELECT 1 FROM tasks
+        WHERE tasks.id = notifications.task_id
+        AND tasks.user_id = auth.uid()
+    ));
+
+CREATE POLICY "Users can insert notifications for their tasks"
+    ON notifications FOR INSERT
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM tasks
+        WHERE tasks.id = notifications.task_id
+        AND tasks.user_id = auth.uid()
+    ));
+
+CREATE POLICY "Users can update notifications for their tasks"
+    ON notifications FOR UPDATE
+    USING (EXISTS (
+        SELECT 1 FROM tasks
+        WHERE tasks.id = notifications.task_id
+        AND tasks.user_id = auth.uid()
+    ));
+
+CREATE POLICY "Users can delete notifications for their tasks"
+    ON notifications FOR DELETE
+    USING (EXISTS (
+        SELECT 1 FROM tasks
+        WHERE tasks.id = notifications.task_id
+        AND tasks.user_id = auth.uid()
+    )); 
