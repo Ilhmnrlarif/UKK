@@ -17,8 +17,6 @@ void main() async {
   );
 
   await initializeDateFormatting('id_ID', null);
-  
-  // Inisialisasi layanan notifikasi
   await NotificationService().initialize();
 
   runApp(const MyApp());
