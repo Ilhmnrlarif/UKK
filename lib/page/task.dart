@@ -138,26 +138,45 @@ class _TaskPageState extends State<TaskPage> {
         }
       }
 
-      final newStatus = true;
-      final now = DateTime.now().toIso8601String();
-      print('Toggling task: ${task['title']}');
-      print('New status: $newStatus');
-      print('Completed at: $now');
+      final now = DateTime.now();
+      String? completionStatus;
+      
+      if (task['due_date'] != null) {
+        final dueDate = DateTime.parse(task['due_date']);
+        final today = DateTime(now.year, now.month, now.day);
+        final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
+
+        // Hanya set status untuk tugas upcoming atau overdue
+        if (taskDate.isAfter(today)) {
+          completionStatus = 'early';
+        } else if (taskDate.isBefore(today)) {
+          completionStatus = 'terlambat';
+        }
+      }
 
       await Supabase.instance.client
           .from('tasks')
           .update({
-            'is_completed': newStatus,
-            'completed_at': now,
+            'is_completed': true,
+            'completed_at': now.toIso8601String(),
+            'completion_status': completionStatus,
           })
           .eq('id', task['id']);
+      
       _loadTasks();
 
       if (!mounted) return;
+      String message = 'Tugas selesai';
+      if (completionStatus != null) {
+        message += ' ($completionStatus)';
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tugas selesai'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text(message),
+          backgroundColor: completionStatus == 'early' ? Colors.green : 
+                         completionStatus == 'terlambat' ? Colors.orange : 
+                         Colors.green,
         ),
       );
     } catch (e) {
@@ -877,6 +896,28 @@ class _TaskPageState extends State<TaskPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (task['is_completed'] == true && task['completion_status'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: task['completion_status'] == 'early' 
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          task['completion_status'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: task['completion_status'] == 'early' 
+                                ? Colors.green
+                                : Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ),
                   Text(
                     task['title'] ?? '',
                     style: TextStyle(
