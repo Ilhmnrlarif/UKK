@@ -896,28 +896,6 @@ class _TaskPageState extends State<TaskPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (task['is_completed'] == true && task['completion_status'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: task['completion_status'] == 'early' 
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          task['completion_status'],
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: task['completion_status'] == 'early' 
-                                ? Colors.green
-                                : Colors.orange,
-                          ),
-                        ),
-                      ),
-                    ),
                   Text(
                     task['title'] ?? '',
                     style: TextStyle(
@@ -949,6 +927,30 @@ class _TaskPageState extends State<TaskPage> {
                             fontSize: 12,
                           ),
                         ),
+                        if (task['is_completed'] == true && task['completion_status'] != null)
+                          Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: task['completion_status'] == 'early' 
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  task['completion_status'],
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: task['completion_status'] == 'early' 
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                 ],
