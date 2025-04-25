@@ -23,6 +23,8 @@ class _AccountPageState extends State<AccountPage> {
   List<String> categories = [];
   int _completedTasks = 0;
   int _pendingTasks = 0;
+  int _upcomingTasks = 0;
+  int _overdueTasks = 0;
   List<ChartData> _chartData = [];
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
@@ -67,28 +69,57 @@ class _AccountPageState extends State<AccountPage> {
 
         int completed = 0;
         int pending = 0;
+        int upcoming = 0;
+        int overdue = 0;
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
         for (var task in response) {
           if (task['is_completed'] == true) {
             completed++;
           } else {
-            pending++;
+            if (task['due_date'] != null) {
+              final dueDate = DateTime.parse(task['due_date']);
+              if (dueDate.isAfter(endOfDay)) {
+                upcoming++;
+              } else if (dueDate.isBefore(today)) {
+                overdue++;
+              } else {
+                pending++;
+              }
+            } else {
+              pending++;
+            }
           }
         }
 
         setState(() {
           _completedTasks = completed;
           _pendingTasks = pending;
+          _upcomingTasks = upcoming;
+          _overdueTasks = overdue;
           _chartData = [
             ChartData(
               'Selesai',
               completed.toDouble(),
-              const Color(0xFF4CAF50), 
+              const Color(0xFF4CAF50),
             ),
             ChartData(
-              'Belum Selesai',
+              'Tertunda',
               pending.toDouble(),
               const Color(0xFFF44336),
+            ),
+            ChartData(
+              'Upcoming',
+              upcoming.toDouble(),
+              const Color(0xFF2196F3),
+            ),
+            ChartData(
+              'Overdue',
+              overdue.toDouble(),
+              const Color(0xFFFF9800),
             ),
           ];
         });
@@ -438,64 +469,33 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 15,
+                    crossAxisSpacing: 15,
+                    childAspectRatio: 1.5,
                     children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                _completedTasks.toString(),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tugas Selesai',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      _buildTaskSummaryCard(
+                        'Tugas Selesai',
+                        _completedTasks,
+                        const Color(0xFF4CAF50),
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                _pendingTasks.toString(),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tugas tertunda',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      _buildTaskSummaryCard(
+                        'Tugas Tertunda',
+                        _pendingTasks,
+                        const Color(0xFFF44336),
+                      ),
+                      _buildTaskSummaryCard(
+                        'Upcoming',
+                        _upcomingTasks,
+                        const Color(0xFF2196F3),
+                      ),
+                      _buildTaskSummaryCard(
+                        'Overdue',
+                        _overdueTasks,
+                        const Color(0xFFFF9800),
                       ),
                     ],
                   ),
@@ -537,6 +537,38 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTaskSummaryCard(String title, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

@@ -26,6 +26,11 @@ class _TaskPageState extends State<TaskPage> {
   List<String> _subtasks = [];
   List<TextEditingController> _subtaskControllers = [];
   List<bool> _editingSubtasks = [];
+  String _currentView = 'Semua';
+  bool _isUpcomingOpen = true;
+  bool _isTodayOpen = true;
+  bool _isOverdueOpen = true;
+  bool _isCompletedOpen = true;
 
   @override
   void initState() {
@@ -63,11 +68,30 @@ class _TaskPageState extends State<TaskPage> {
       if (_selectedTab != 0) {
         query = query.eq('category', _categories[_selectedTab]);
       }
+
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day).toIso8601String();
       final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1).toIso8601String();
 
-      query = query.or('completed_at.is.null,and(completed_at.gte.$startOfDay,completed_at.lte.$endOfDay)');
+      // Filter berdasarkan tab yang dipilih
+      switch (_currentView) {
+        case 'Semua':
+          // Tampilkan semua tugas
+          break;
+        case 'Upcoming':
+          // Tampilkan tugas yang due date-nya besok atau lebih
+          query = query.gte('due_date', tomorrow);
+          break;
+        case 'Overdue':
+          // Tampilkan tugas yang telat (due date sebelum hari ini dan belum selesai)
+          query = query.lt('due_date', startOfDay).eq('is_completed', false);
+          break;
+        default: // Hari ini
+          // Tampilkan tugas untuk hari ini
+          query = query.gte('due_date', startOfDay).lt('due_date', endOfDay);
+          break;
+      }
 
       final response = await query.order('created_at', ascending: false);
 
@@ -303,6 +327,30 @@ class _TaskPageState extends State<TaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    // Filter tasks berdasarkan kategori waktu
+    final upcomingTasks = _tasks.where((task) => 
+      task['due_date'] != null && 
+      DateTime.parse(task['due_date']).isAfter(endOfDay) &&
+      !task['is_completed']
+    ).toList();
+
+    final todayTasks = _tasks.where((task) => 
+      task['due_date'] != null && 
+      DateTime.parse(task['due_date']).isAfter(startOfDay) &&
+      DateTime.parse(task['due_date']).isBefore(endOfDay) &&
+      !task['is_completed']
+    ).toList();
+
+    final overdueTasks = _tasks.where((task) => 
+      task['due_date'] != null && 
+      DateTime.parse(task['due_date']).isBefore(startOfDay) &&
+      !task['is_completed']
+    ).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: SideBar(
@@ -403,27 +451,44 @@ class _TaskPageState extends State<TaskPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _tasks.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                : ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: [
+                      // Upcoming Section
+                      if (upcomingTasks.isNotEmpty) ...[
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isUpcomingOpen = !_isUpcomingOpen;
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
                         children: [
-                          Image.asset(
-                            'assets/images/cuate.png',
-                            height: 200,
-                          ),
-                          const SizedBox(height: 20),
                           const Text(
-                            'Belum ada tugas',
+                                  'Upcoming',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Icon(
+                                  _isUpcomingOpen 
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: [
+                        ),
+                        if (_isUpcomingOpen)
+                          ...upcomingTasks.map((task) => _buildTaskItem(task)).toList(),
+                      ],
+
+                      // Today Section
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -452,78 +517,110 @@ class _TaskPageState extends State<TaskPage> {
                               ),
                             ),
                           ),
-                          if (_isTasksOpen) ...[
-                            ..._tasks.where((task) => !task['is_completed']).map((task) => 
-                              _buildTaskItem(task)
-                            ).toList(),
-                          ],
+                      if (_isTasksOpen)
+                        ...todayTasks.map((task) => _buildTaskItem(task)).toList(),
 
-                          if (_tasks.any((task) => task['is_completed'])) ...[
-                            const SizedBox(height: 24),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _isCompletedTasksOpen = !_isCompletedTasksOpen;
-                                });
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                child: Row(
-                                  children: [
-                                    const Text(
-                                      'Selesai Hari Ini',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Icon(
-                                      _isCompletedTasksOpen 
-                                          ? Icons.keyboard_arrow_up
-                                          : Icons.keyboard_arrow_down,
-                                      color: Colors.black54,
-                                    ),
-                                  ],
+                      // Overdue Section
+                      if (overdueTasks.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isOverdueOpen = !_isOverdueOpen;
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'Overdue',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                              ),
+                                Icon(
+                                  _isOverdueOpen 
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
                             ),
-                            if (_isCompletedTasksOpen) ...[
-                              ..._tasks.where((task) => task['is_completed']).map((task) =>
-                                _buildTaskItem(task)
-                              ).toList(),
-                            ],
-                            if (!_isCompletedTasksOpen) ...[
-                              InkWell(
-                                onTap: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const HistoryTaskPage(),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _loadTasks();
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  child: Center(
-                                    child: Text(
-                                      'Periksa semua tugas yang sudah selesai',
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 14,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
+                          ),
+                        ),
+                        if (_isOverdueOpen)
+                          ...overdueTasks.map((task) => _buildTaskItem(task)).toList(),
+                      ],
+
+                      // Completed Section
+                      if (_tasks.any((task) => task['is_completed'])) ...[
+                        const SizedBox(height: 24),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isCompletedTasksOpen = !_isCompletedTasksOpen;
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'Selesai',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Icon(
+                                  _isCompletedTasksOpen 
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_isCompletedTasksOpen)
+                          ..._tasks
+                              .where((task) => task['is_completed'])
+                              .map((task) => _buildTaskItem(task))
+                              .toList(),
+                        if (!_isCompletedTasksOpen)
+                          InkWell(
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HistoryTaskPage(),
+                                ),
+                              );
+                              if (result == true) {
+                                _loadTasks();
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  'Periksa semua tugas yang sudah selesai',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 14,
+                                    decoration: TextDecoration.underline,
                                   ),
                                 ),
                               ),
-                            ],
-                          ],
-                        ],
-                      ),
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
           ),
         ],
       ),
@@ -560,30 +657,86 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  Widget _buildTab(String text, int index) {
-    bool isSelected = _selectedTab == index;
-    return GestureDetector(
+  Widget _buildSection(String title, String count, List<Map<String, dynamic>> tasks) {
+    return Column(
+      children: [
+        InkWell(
       onTap: () {
         setState(() {
-          _selectedTab = index;
-        });
-        _loadTasks();
-      },
-      child: Container(
+              switch (title) {
+                case 'Upcoming':
+                  _isUpcomingOpen = !_isUpcomingOpen;
+                  break;
+                case 'Today':
+                  _isTodayOpen = !_isTodayOpen;
+                  break;
+                case 'Overdue':
+                  _isOverdueOpen = !_isOverdueOpen;
+                  break;
+                case 'Completed':
+                  _isCompletedOpen = !_isCompletedOpen;
+                  break;
+              }
+            });
+          },
+          child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF69D1F7) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
+                    color: Colors.yellow,
+                    borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[600],
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    count,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  _getSectionOpenState(title) 
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: Colors.white,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
+        if (_getSectionOpenState(title))
+          ...tasks.map((task) => _buildTaskItem(task)).toList(),
+      ],
     );
+  }
+
+  bool _getSectionOpenState(String title) {
+    switch (title) {
+      case 'Upcoming':
+        return _isUpcomingOpen;
+      case 'Today':
+        return _isTodayOpen;
+      case 'Overdue':
+        return _isOverdueOpen;
+      case 'Completed':
+        return _isCompletedOpen;
+      default:
+        return false;
+    }
   }
 
   Widget _buildTaskItem(Map<String, dynamic> task) {
@@ -598,6 +751,34 @@ class _TaskPageState extends State<TaskPage> {
         default:
           return Colors.grey;
       }
+    }
+
+    String formatDate(String? dateStr) {
+      if (dateStr == null) return '';
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final taskDate = DateTime(date.year, date.month, date.day);
+
+      // Format tanggal standar: DD-MM
+      String standardDate = '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}';
+
+      // Cek jika tugas overdue
+      if (taskDate.isBefore(today) && !task['is_completed']) {
+        final difference = today.difference(taskDate).inDays;
+        return '$standardDate (${difference}d late)';
+      }
+
+      return standardDate;
+    }
+
+    bool isOverdue() {
+      if (task['due_date'] == null) return false;
+      final date = DateTime.parse(task['due_date']);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final taskDate = DateTime(date.year, date.month, date.day);
+      return taskDate.isBefore(today) && !task['is_completed'];
     }
 
     return GestureDetector(
@@ -693,18 +874,43 @@ class _TaskPageState extends State<TaskPage> {
               ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                task['title'] ?? '',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  decoration: task['is_completed'] == true
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: task['is_completed'] == true
-                      ? Colors.grey
-                      : Colors.black,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task['title'] ?? '',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      decoration: task['is_completed'] == true
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: task['is_completed'] == true
+                          ? Colors.grey
+                          : Colors.black,
+                    ),
+                  ),
+                  if (task['due_date'] != null)
+                    Row(
+                      children: [
+                        if (isOverdue())
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.red,
+                          ),
+                        if (isOverdue())
+                          const SizedBox(width: 4),
+                        Text(
+                          formatDate(task['due_date']),
+                          style: TextStyle(
+                            color: isOverdue() ? Colors.red : Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
               ),
             ),
             if (task['subtasks'] != null && (task['subtasks'] as List).isNotEmpty)
@@ -731,15 +937,7 @@ class _TaskPageState extends State<TaskPage> {
                       size: 20,
                       color: getPriorityColor(task['priority']),
                     ),
-                ),
-              ),
-            ),
-            if (task['due_date'] != null)
-              Text(
-                task['due_date'].toString().split('T')[0],
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+                  ),
                 ),
               ),
           ],
@@ -747,5 +945,30 @@ class _TaskPageState extends State<TaskPage> {
       ),
     );
   }
-}
 
+  Widget _buildTab(String text, int index) {
+    bool isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTab = index;
+        });
+        _loadTasks();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF69D1F7) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[600],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+}
